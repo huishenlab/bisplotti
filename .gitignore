@@ -19,6 +19,7 @@
 
 # RStudio files
 .Rproj.user/
+*.Rproj
 
 # produced vignettes
 vignettes/*.html
@@ -37,3 +38,14 @@ vignettes/*.pdf
 
 # R Environment Variables
 .Renviron
+
+# Python
+*.pyc
+
+# Misc R
+*.orig
+.DS_Store
+Rd2.pdf
+assets/
+inst/doc/*.html
+*.log
