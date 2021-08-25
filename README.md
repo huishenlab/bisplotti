@@ -1,4 +1,4 @@
-# bisplotly
+# bisplotti
 
 [![Build Status](https://travis-ci.org/huishenlab/bisplotly.png?branch=master)](https://travis-ci.org/huishenlab/bisplotly)  [![codecov](https://codecov.io/gh/huishenlab/bisplotly/branch/master/graph/badge.svg)](https://codecov.io/gh/huishenlab/bisplotly)
 
