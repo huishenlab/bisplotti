@@ -1,25 +1,39 @@
-Package: bisplotly
+Package: bisplotti
 Type: Package
-Title: Informative Title for Your Package
-Description: A longer statement about what this does. It must have at least one
-    complete sentence, and it may not begin with the name of the package or
-    "This package". Any URL must be enclosed in angle brackets. Any R packages
-    or other software you reference must be in single quotes. 'R CMD check'
-    may not report on these, but see  <https://cran.r-project.org/doc/manuals/r-release/R-exts.html#The-DESCRIPTION-file>.
-    Failure to obey may result in CRAN rejecting your package submission.
-Version: 0.1.0
-Date: 2020-07-21
-Authors@R: c(person("your", "name", role=c("aut", "cre"), email="youremail@example.com"))
-Author: yourname [aut, cre]
-Maintainer: yourname <youremail@example.com>
+Title: Plotting package for bisulfite sequencing data
+Description: Bisplotti is primarily a plotting focused package for bisulfite and 
+		  bisulfite-like (e.g. EM-seq) sequencing and array data. The main goal
+		  is to provide commonly used plotting and directed analyses for these
+		  data types and will be evolving over time. If there are specific types
+		  of plots that you, as a user, would like to see or have functions to 
+		  generate the plots you use on a regular basis, please consider opening
+		  either a pull request or an issue.
+Version: 0.0.1
+Date: 2021-09-07
+Authors@R: c(person("Hui", "Shen", role = c("aut")),
+		  person("Wanding", "Zhou", role = c("aut")),
+             person("Ben", "Johnson", role = c("aut")),
+             person("Jacob", "Morrison", role = c("aut", "cre"),
+             email = "jacob.morrison@vai.org"),
+		  person("Ian", "Beddows", role = c("aut")))
 URL: https://github.com/huishenlab/bisplotly
 BugReports: https://github.com/huishenlab/bisplotly/issues
-License: MIT + file LICENSE
+License: GPL-3
 Depends:
-    R (>= 3.0.0)
+    R (>= 4.1.0),
+    biscuiteer,
+    biscuiteerData,
+    bsseq,
+    ggplot2
 Imports:
 Suggests:
     covr,
-    testthat
-RoxygenNote: 6.0.0
+    testthat,
+    Rmarkdown,
+    Markdown,
+    Rang,
+    Roxygen2,
+Encoding: UTF-8
+RoxygenNote: 7.1.1
 Roxygen: list(markdown = TRUE)
+VignetteBuilder: knitr
