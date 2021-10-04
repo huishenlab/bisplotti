@@ -75,7 +75,7 @@ tabulateEpibed <- function(gr,
                                     FUN = function(x) {
     sub_gr <- gr[x]
     # generate a per base array
-    pos_vec <- seq(start(sub_gr), end(sub_gr))
+    pos_vec <- seq(start(sub_gr), end(sub_gr)+1)
     if (cg) {
       rle_vec <- unlist(strsplit(sub_gr$CG_decode, split = ""))
     } else {
