@@ -91,7 +91,7 @@ tabulateEpibed <- function(gr,
       rle_vec_c <- rle_vec[rle_vec %in% c("O", "S")]
     }
     if (!length(rle_vec_c)) {
-      return()
+      return(GRanges(c(seqnames=NULL,ranges=NULL,strand=NULL)))
     }
     # turn back into GRanges
     rle_c_df <- data.frame(chr = seqnames(sub_gr),
