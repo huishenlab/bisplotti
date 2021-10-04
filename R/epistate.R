@@ -195,7 +195,7 @@ tabulateEpibed <- function(gr,
 .filterEmptyReads <- function(mat) {
   # input is a matrix after tabulateEpiread is done
   # filter reads
-  mat.sub <- mat[rowMeans(is.na(mat)) < 1,]
+  mat.sub <- mat[rowMeans(is.na(mat)) < 1,,drop=FALSE]
   # order
   mat.sub <- mat.sub[,order(colnames(mat.sub))]
   return(mat.sub)
