@@ -197,7 +197,7 @@ tabulateEpibed <- function(gr,
   # filter reads
   mat.sub <- mat[rowMeans(is.na(mat)) < 1,,drop=FALSE]
   # order
-  mat.sub <- mat.sub[,order(colnames(mat.sub))]
+  mat.sub <- mat.sub[,order(colnames(mat.sub)),drop=FALSE]
   return(mat.sub)
 }
 
