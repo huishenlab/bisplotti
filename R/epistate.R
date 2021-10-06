@@ -75,7 +75,7 @@ tabulateEpibed <- function(gr,
                                     FUN = function(x) {
     sub_gr <- gr[x]
     # generate a per base array
-    pos_vec <- seq(start(sub_gr), end(sub_gr))
+    pos_vec <- seq(start(sub_gr), end(sub_gr)+1)
     if (cg) {
       rle_vec <- unlist(strsplit(sub_gr$CG_decode, split = ""))
     } else {
@@ -91,7 +91,7 @@ tabulateEpibed <- function(gr,
       rle_vec_c <- rle_vec[rle_vec %in% c("O", "S")]
     }
     if (!length(rle_vec_c)) {
-      return()
+      return(GRanges(c(seqnames=NULL,ranges=NULL,strand=NULL)))
     }
     # turn back into GRanges
     rle_c_df <- data.frame(chr = seqnames(sub_gr),
@@ -195,9 +195,9 @@ tabulateEpibed <- function(gr,
 .filterEmptyReads <- function(mat) {
   # input is a matrix after tabulateEpiread is done
   # filter reads
-  mat.sub <- mat[rowMeans(is.na(mat)) < 1,]
+  mat.sub <- mat[rowMeans(is.na(mat)) < 1,,drop=FALSE]
   # order
-  mat.sub <- mat.sub[,order(colnames(mat.sub))]
+  mat.sub <- mat.sub[,order(colnames(mat.sub)),drop=FALSE]
   return(mat.sub)
 }
 
