@@ -6,14 +6,17 @@
 #' @param what Column to plot (default: score)
 #' @param chr.to.plot Chromosome to plot, all if NULL (default: NULL)
 #' 
+#' @return a ggplot2 object of the multiscale plot
+#' 
 #' @import GenomicRanges
 #' @import ggplot2
 #' @import viridis
 #' 
 #' @export
 #' 
-#' @example
+#' @examples
 #' 
+
 multiscaleMethylationPlot <- function(grl,
                                       colors="YlGnBu",
                                       na_color="darkgray",
@@ -90,56 +93,3 @@ multiscaleMethylationPlot <- function(grl,
   return(g)
 }
 
-# Get the mean multiscale data
-# setwd("~/Downloads")
-# means <- lapply(
-#     list.files("multiscale_analysis/stats", pattern="cross_sample_mean", full.names=TRUE), function(x) {
-#         return(rtracklayer::import(x, format = "bedGraph"))
-#     }
-# )
-# cnames <- list.files("multiscale_analysis/stats", pattern="cross_sample_mean")
-# cnames <- gsub("cross_sample_mean", "mean", cnames)
-# cnames <- gsub(".bed.gz", "", cnames)
-# names(means) <- cnames
-# 
-# # Only want the first 35 Mb for comparison with Nature Genetics Paper
-# chr16_0_35Mb <- GRanges(Rle(c("chr16"), c(1)), IRanges(1, width = 35000000))
-# 
-# # Single samples
-# sampl_100 <- lapply(
-#     list.files("multiscale_analysis/means", pattern="Heyn_2012_Human_CD4T_100yo", full.names=TRUE), function(x) {
-#         return(rtracklayer::import(x, format = "bedGraph", which = chr16_0_35Mb))
-#     }
-# )
-# cnames <- list.files("multiscale_analysis/means", pattern="Heyn_2012_Human_CD4T_100yo")
-# cnames <- gsub("Heyn_2012_Human_CD4T_100yo", "100yr", cnames)
-# cnames <- gsub(".bed.gz", "", cnames)
-# names(sampl_100) <- cnames
-# 
-# sampl_New <- lapply(
-#     list.files("multiscale_analysis/means", pattern="Heyn_2012_Human_CD4T_Newborn", full.names=TRUE), function(x) {
-#         return(rtracklayer::import(x, format = "bedGraph", which = chr16_0_35Mb))
-#     }
-# )
-# cnames <- list.files("multiscale_analysis/means", pattern="Heyn_2012_Human_CD4T_Newborn")
-# cnames <- gsub("Heyn_2012_Human_CD4T_Newborn", "New", cnames)
-# cnames <- gsub(".bed.gz", "", cnames)
-# names(sampl_New) <- cnames
-# 
-# # Turn list of GRanges into GRangesList
-# test.data.means <- as(means, "GRangesList")
-# test.data.sampl_100 <- as(sampl_100, "GRangesList")
-# test.data.sampl_New <- as(sampl_New, "GRangesList")
-# 
-# # Create multiscale methylation plots
-# pdf(file="test/test_means.pdf", width = 8, height = 3)
-# multiscaleMethylationPlot(test.data.means, chr.to.plot = "chr16", colors = "YlGnBu")
-# dev.off()
-# 
-# pdf(file="test/test_sampl_100.pdf", width = 8, height = 3)
-# multiscaleMethylationPlot(test.data.sampl_100, chr.to.plot = NULL, colors = "YlGnBu")
-# dev.off()
-# 
-# pdf(file="test/test_sampl_New.pdf", width = 8, height = 3)
-# multiscaleMethylationPlot(test.data.sampl_New, chr.to.plot = NULL, colors = "YlGnBu")
-# dev.off()
