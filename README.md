@@ -1,6 +1,6 @@
 <img id="bisplotti_logo" src="man/figures/bisplotti_bg.png" align="left" width="300"/><br />
 <br />
-<br />
+&nbsp;
 
 ## bisplotti
 
@@ -22,9 +22,10 @@ Some rudimentary plotting ideas. Not all of these are fully implemented yet.
 ### Multi-scale plots of solo-WCGWs
 
 <p align="center">
-  <img id="multiscale_plot" src="man/figures/example_multiscale_plot_chr16_tcell_new_old.png" align="center" width="300"/>
+  <img id="multiscale_plot" src="man/figures/example_multiscale_plot_chr16_tcell_new_old.png"/>
 </p>
 
 ### Epiread and epiallele 
-
-<img id="epiread_plot" src="man/figures/epistate_test_plot.png" align="left" width="300"/>
+<p align="center">
+  <img id="epiread_plot" src="man/figures/epistate_test_plot.png"/>
+</p>
