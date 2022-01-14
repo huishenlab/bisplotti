@@ -86,9 +86,9 @@ tabulateEpibed <- function(gr,
     rle_vec <- .filterInsertions(rle_vec)
     # keep the C status
     if (cg) {
-      rle_vec_c <- rle_vec[rle_vec %in% c("M", "U")]
+      rle_vec_c <- rle_vec[rle_vec %in% c("M", "U", "A", "T", "G", "C")]
     } else {
-      rle_vec_c <- rle_vec[rle_vec %in% c("O", "S")]
+      rle_vec_c <- rle_vec[rle_vec %in% c("O", "S", "A", "T", "G", "C")]
     }
     if (!length(rle_vec_c)) {
       return(GRanges(c(seqnames=NULL,ranges=NULL,strand=NULL)))
@@ -209,6 +209,10 @@ tabulateEpibed <- function(gr,
 #' @param show_readnames Whether to show the read names (default: TRUE)
 #' @param show_positions Whether to show the genomic positions (default: TRUE)
 #' @param meth_color What color should the methylated states be (default: 'black')
+#' @param a_color What color should the A SNPs be (default: '#F26419')
+#' @param t_color What color should the T SNPs be (default: '#E9C46A')
+#' @param g_color What color should the G SNPs be (default: '#264653')
+#' @param c_color What color should the C SNPs be (default: '#2A9D8F')
 #' @param unmeth_color What color should the unmethylated states be (default: 'white')
 #' @param na_color What color should the NA values be (default: 'darkgray')
 #' @param background_color What color the background of the plot should be (default: '#A3D0E9')
@@ -233,6 +237,10 @@ plotEpiread <- function(mat, plot_read_ave = TRUE,
                         show_positions = TRUE,
                         unmeth_color = "white",
                         meth_color = "black",
+                        a_color = "#F26419",
+                        t_color = "#E9C46A",
+                        g_color = "#264653",
+                        c_color = "#2A9D8F",
                         na_color = "darkgray",
                         background_color = "#A3D0E9") {
   
@@ -294,14 +302,24 @@ plotEpiread <- function(mat, plot_read_ave = TRUE,
   if (is.cg) {
     plt <- ggplot(mat.melt, aes(x = Var2, y = Var1)) +
       geom_point(aes(fill = value), size=6, pch=21, color="black") +
-      scale_fill_manual(values = c(M=meth_color, U=unmeth_color),
+      scale_fill_manual(values = c(M=meth_color,
+                                    U=unmeth_color,
+                                    A=a_color,
+                                    T=t_color,
+                                    G=g_color,
+                                    C=c_color),
                          na.value = na_color) +
       guides(color = "legend") +
       ql_theme
   } else {
     plt <- ggplot(mat.melt, aes(x = Var2, y = Var1)) +
       geom_point(aes(fill = value), size=6, pch=21, color="black") +
-      scale_fill_manual(values = c(O=meth_color, S=unmeth_color),
+      scale_fill_manual(values = c(O=meth_color,
+                                    S=unmeth_color,
+                                    A=a_color,
+                                    T=t_color,
+                                    G=g_color,
+                                    C=c_color),
                         na.value = na_color) +
       guides(color = "legend") +
       ql_theme

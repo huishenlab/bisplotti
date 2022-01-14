@@ -8,14 +8,15 @@ Description: Bisplotti is primarily a plotting focused package for bisulfite and
 		  of plots that you, as a user, would like to see or have functions to 
 		  generate the plots you use on a regular basis, please consider opening
 		  either a pull request or an issue.
-Version: 0.0.1
-Date: 2021-10-06
+Version: 0.0.2
+Date: 2022-01-14
 Authors@R: c(person("Hui", "Shen", role = c("aut")),
              person("Wanding", "Zhou", role = c("aut")),
              person("Ben", "Johnson", role = c("aut")),
              person("Jacob", "Morrison", role = c("aut", "cre"),
              email = "jacob.morrison@vai.org"),
-             person("Ian", "Beddows", role = c("aut")))
+             person("Ian", "Beddows", role = c("aut")),
+             person("James", "Eapen", role = c("aut")))
 URL: https://github.com/huishenlab/bisplotti
 BugReports: https://github.com/huishenlab/bisplotti/issues
 License: GPL-3
