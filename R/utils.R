@@ -57,10 +57,10 @@ mergeMCols <- function(gr1, gr2, append.gr1 = "_1", append.gr2 = "_2") {
 
 #' Get the seqlengths of a chromosome or all chromosomes
 #'
-#' @param gen Genome to retrieve, currently only hg38, hg19, mm9, mm10 (default: hg38)
+#' @param genome Genome to retrieve, currently only hg38, hg19, mm9, mm10 (default: hg38)
 #' @param chr Chromosome to retrieve length of, all chromosomes if NULL (default: NULL)
 #'
-#' @return seqlengths of gen
+#' @return seqlengths of genome
 #'
 #' @import GenomicRanges
 #'
@@ -70,15 +70,15 @@ mergeMCols <- function(gr1, gr2, append.gr1 = "_1", append.gr2 = "_2") {
 #'
 #' gen.sl <- getSeqLengths("hg38", "chr11")
 #'
-getSeqLengths <- function(gen = c("hg38", "hg19", "mm9", "mm10"), chr = NULL) {
+getSeqLengths <- function(genome = c("hg38", "hg19", "mm9", "mm10"), chr = NULL) {
     # Eventually we should support arbitrary genomes
-    gen <- match.arg(gen)
+    genome <- match.arg(genome)
 
     # Check if the genome used exists in what is currently supported, stopping if not
-    if (!gen %in% c("hg38", "hg19", "mm9", "mm10")) stop("Only human and mouse are supported for the time being.")
+    if (!genome %in% c("hg38", "hg19", "mm9", "mm10")) stop("Only human and mouse are supported for the time being.")
 
     # Import
-    genome.gr <- switch(gen,
+    genome.gr <- switch(genome,
                         hg19 = data("hg19.gr", package = "bisplotti"),
                         hg38 = data("hg38.gr", package = "bisplotti"),
                         mm9  = data("mm9.gr" , package = "bisplotti"),
@@ -86,7 +86,7 @@ getSeqLengths <- function(gen = c("hg38", "hg19", "mm9", "mm10"), chr = NULL) {
 
     # Make sure that the chromosome specified exists in the seqlevels
     if (!is.null(chr)) {
-        if (!chr %in% seqlevels(get(genome.gr))) stop("Desired chromosome is not found in the seqlevels of ", gen)
+        if (!chr %in% seqlevels(get(genome.gr))) stop("Desired chromosome is not found in the seqlevels of ", genome)
     }
 
     # Get the seqlengths

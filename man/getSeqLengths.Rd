@@ -4,15 +4,15 @@
 \alias{getSeqLengths}
 \title{Get the seqlengths of a chromosome or all chromosomes}
 \usage{
-getSeqLengths(gen = c("hg38", "hg19", "mm9", "mm10"), chr = NULL)
+getSeqLengths(genome = c("hg38", "hg19", "mm9", "mm10"), chr = NULL)
 }
 \arguments{
-\item{gen}{Genome to retrieve, currently only hg38, hg19, mm9, mm10 (default: hg38)}
+\item{genome}{Genome to retrieve, currently only hg38, hg19, mm9, mm10 (default: hg38)}
 
 \item{chr}{Chromosome to retrieve length of, all chromosomes if NULL (default: NULL)}
 }
 \value{
-seqlengths of gen
+seqlengths of genome
 }
 \description{
 Get the seqlengths of a chromosome or all chromosomes
