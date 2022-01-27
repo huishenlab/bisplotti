@@ -22,7 +22,7 @@ library(Mus.musculus)
 mm10.gr <- as(seqinfo(Mus.musculus), "GRanges")
 
 #save
-save(hg19.gr, file = "bisplotti/data/hg19_gr.rda")
-save(hg38.gr, file = "bisplotti/data/hg38_gr.rda")
-save(mm9.gr, file = "bisplotti/data/mm9_gr.rda")
-save(mm10.gr, file = "bisplotti/data/mm10_gr.rda")
+save(hg19.gr, file = "bisplotti/data/hg19.gr.rda")
+save(hg38.gr, file = "bisplotti/data/hg38.gr.rda")
+save(mm9.gr, file = "bisplotti/data/mm9.gr.rda")
+save(mm10.gr, file = "bisplotti/data/mm10.gr.rda")
