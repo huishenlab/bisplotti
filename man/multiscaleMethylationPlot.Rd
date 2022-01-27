@@ -31,4 +31,20 @@ Create the multiscale plot from a list of GRanges
 }
 \examples{
 
+files.loc <- system.file("extdata", package="bisplotti")
+
+files <- lapply(
+    list.files(files.loc, pattern="Heyn_2012_100yr", full.names=TRUE), function(x) {
+        return(rtracklayer::import(x, format="bedGraph"))
+    }
+)
+cnames <- list.files(files.loc, pattern="Heyn_2012_100yr")
+cnames <- gsub("Heyn_2012_100yr", "100yr", cnames)
+cnames <- gsub(".bed.gz", "", cnames)
+names(files) <- cnames
+
+files.grl <- as(files, "GRangesList")
+
+multiscaleMethylationPlot(files.grl)
+
 }
