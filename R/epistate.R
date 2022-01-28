@@ -208,14 +208,10 @@ tabulateEpibed <- function(gr,
 #' @param plot_read_ave Whether to also plot the average methylation state (default: TRUE)
 #' @param show_readnames Whether to show the read names (default: TRUE)
 #' @param show_positions Whether to show the genomic positions (default: TRUE)
+#' @param show_filtered Whether to show the filtered values (default: FALSE)
 #' @param meth_color What color should the methylated states be (default: 'black')
-#' @param a_color What color should the A SNPs be (default: '#F26419')
-#' @param t_color What color should the T SNPs be (default: '#E9C46A')
-#' @param g_color What color should the G SNPs be (default: '#264653')
-#' @param c_color What color should the C SNPs be (default: '#2A9D8F')
 #' @param unmeth_color What color should the unmethylated states be (default: 'white')
 #' @param na_color What color should the NA values be (default: 'darkgray')
-#' @param background_color What color the background of the plot should be (default: '#A3D0E9')
 #' 
 #' @return An epiread ggplot object or list of ggplot objects if plot_read_ave is TRUE
 #' 
@@ -225,24 +221,20 @@ tabulateEpibed <- function(gr,
 #' @export
 #'
 #' @examples
-#' epibed.nome <- system.file("extdata", "hct116.nome.epiread",
+#' epibed.nome <- system.file("extdata", "hct116.nome.epiread.gz",
 #'                            package="biscuiteer")
 #' epibed.nome.gr <- readEpibed(epibed = epibed.nome, is.nome = TRUE,
-#'                              genome = "hg19")
+#'                              genome = "hg19", chr = "chr1")
 #' epibed.tab.nome <- tabulateEpibed(epibed.nome.gr)
 #' plotEpiread(epibed.tab.nome$gc_table)
 
 plotEpiread <- function(mat, plot_read_ave = TRUE,
                         show_readnames = TRUE,
                         show_positions = TRUE,
+                        show_filtered = FALSE,
                         unmeth_color = "white",
                         meth_color = "black",
-                        a_color = "#F26419",
-                        t_color = "#E9C46A",
-                        g_color = "#264653",
-                        c_color = "#2A9D8F",
-                        na_color = "darkgray",
-                        background_color = "#A3D0E9") {
+                        na_color = "darkgray") {
   
   # check if input is a matrix
   if (!is(mat, "matrix")) {
@@ -251,15 +243,14 @@ plotEpiread <- function(mat, plot_read_ave = TRUE,
   
   # set themes
   ql_theme <- theme_bw(12) + theme(
-    axis.title = element_blank(),
-    legend.title = element_blank(),
-    axis.text.x = element_text(angle = 45,
-                               vjust = 1,
-                               hjust = 1),
-    panel.grid.major.x = element_blank(),
-    panel.grid.major.y = element_line(color = "black"),
-    panel.background = element_rect(fill = background_color))
-  
+      axis.title = element_blank(),
+      legend.title = element_blank(),
+      axis.text.x = element_text(angle = 45,
+                                 vjust = 1,
+                                 hjust = 1),
+      panel.grid.major.x = element_blank(),
+      panel.grid.major.y = element_line(color = "black"))
+
   if (!show_readnames) {
     # set the theme
     ql_theme <- ql_theme + theme(axis.text.y = element_blank(),
@@ -297,29 +288,41 @@ plotEpiread <- function(mat, plot_read_ave = TRUE,
   
   # cast to a 'melted' data frame
   mat.melt <- reshape2::melt(mat, id.vars = rownames(mat))
+  if (!show_filtered) {
+      mat.melt <- subset(mat.melt, !is.na(value)) 
+  }
   
+  snp_list <- c("A", "T", "G", "C")
   # plot
+
   if (is.cg) {
     plt <- ggplot(mat.melt, aes(x = Var2, y = Var1)) +
-      geom_point(aes(fill = value), size=6, pch=21, color="black") +
-      scale_fill_manual(values = c(M=meth_color,
-                                    U=unmeth_color,
-                                    A=a_color,
-                                    T=t_color,
-                                    G=g_color,
-                                    C=c_color),
-                         na.value = na_color) +
-      guides(color = "legend") +
-      ql_theme
+        geom_label(
+            data = subset(mat.melt, value %ni% c("M", "U")),
+            aes(label = value)
+        ) +
+        geom_point(
+            data = subset(mat.melt, value %ni% snp_list),
+            aes(fill = value), size = 6, pch = 21, color = "black"
+        ) +
+        scale_fill_manual(
+            values = c(M = meth_color, U = unmeth_color),
+            na.value = na_color
+        ) +
+        guides(color = "legend") +
+        ql_theme
   } else {
     plt <- ggplot(mat.melt, aes(x = Var2, y = Var1)) +
-      geom_point(aes(fill = value), size=6, pch=21, color="black") +
-      scale_fill_manual(values = c(O=meth_color,
-                                    S=unmeth_color,
-                                    A=a_color,
-                                    T=t_color,
-                                    G=g_color,
-                                    C=c_color),
+        geom_label(
+            data = subset(mat.melt, value %ni% c("S","O")),
+            aes(label = value)
+        ) +
+        geom_point(
+            data = subset(mat.melt, value %ni% snp_list),
+            aes(fill = value), size = 6, pch = 21, color = "black"
+        ) +
+        scale_fill_manual(values = c(O=meth_color,
+                                    S=unmeth_color),
                         na.value = na_color) +
       guides(color = "legend") +
       ql_theme
