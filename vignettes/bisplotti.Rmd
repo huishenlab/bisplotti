@@ -20,15 +20,17 @@ knitr::opts_chunk$set(warning=FALSE, message=FALSE)
 
 # Bisplotti
 
-`bisplotti` is a package to generate commonly produced plots in DNA methylation sequencing analyses. It creates plots
-from standard Bioconductor formats (i.e., `GRanges`) and the commonly used `BSseq` format.
+`bisplotti` is a package to generate commonly produced plots in DNA methylation
+sequencing analyses. It creates plots from standard Bioconductor formats (i.e.,
+`GRanges`) and the commonly used `BSseq` format.
 
 # Quick Start
 
 ## Installing
 
 A development version is available on GitHub and can be installed via:
-```{r, eval=FALSE}
+
+```{r install, eval=FALSE}
 if (!requireNamespace("BiocManager", quietly=TRUE)) {
     install.packages("BiocManager")
 }
@@ -44,11 +46,13 @@ library(bisplotti)
 
 ## Epiread
 
-To create the lollipop epiread plots, two commands are needed. First, use the GRanges output from
-`biscuiteer::readEpibed()` as input to `tabulateEpibed`, which turns the GRanges into a convenient matrix format. The
-second command, `plotEpiread` uses the matrix output from `tabulateEpibed` as the input to create the lollipop plot.
+To create the lollipop epiread plots, two commands are needed. First, use the
+GRanges output from `biscuiteer::readEpibed()` as input to `tabulateEpibed`,
+which turns the GRanges into a convenient matrix format. The second command,
+`plotEpiread` uses the matrix output from `tabulateEpibed` as the input to
+create the lollipop plot.
 
-```{r}
+```{r plotEpiread}
 epibed.nome     <- system.file("extdata", "hct116.nome.epiread.gz", package="biscuiteer")
 epibed.nome.gr  <- readEpibed(epibed = epibed.nome, is.nome = TRUE, genome = "hg19", chr = "chr1")
 epibed.tab.nome <- tabulateEpibed(epibed.nome.gr)
@@ -57,13 +61,14 @@ plotEpiread(epibed.tab.nome$gc_table)
 
 ## Multiscale
 
-The multiscale plot is based on Figures [2](https://www.nature.com/articles/s41588-018-0073-4/figures/2) and
-[6](https://www.nature.com/articles/s41588-018-0073-4/figures/6) of
-[Zhou et al., Nature Genetics, 2018](https://www.nature.com/articles/s41588-018-0073-4). It shows the average
-methylation levels across varying size genomic windows. The example shows a small portion of chromosome 16 for window
-sizes running from 1 Mb to 10 Mb.
+The multiscale plot is based on Figures [2](https://www.nature.com/articles/s41588-018-0073-4/figures/2) 
+and [6](https://www.nature.com/articles/s41588-018-0073-4/figures/6) of 
+[Zhou et al., Nature Genetics, 2018](https://www.nature.com/articles/s41588-018-0073-4).
+It shows the average methylation levels across varying size genomic windows.
+The example shows a small portion of chromosome 16 for window sizes running
+from 1 Mb to 10 Mb.
 
-```{r}
+```{r multiscale}
 files.loc <- system.file("extdata", package="bisplotti")
 
 files <- lapply(
@@ -83,23 +88,27 @@ multiscaleMethylationPlot(files.grl)
 
 ## 1D Methylation Level Density
 
-The 1D methylation level density plot shows the density of the methylation levels for all CpGs in your dataset. An
-example of creating this plot is:
-```{r}
+The 1D methylation level density plot shows the density of the methylation
+levels for all CpGs in your dataset. An example of creating this plot is:
+
+```{r meth1d}
 bed <- system.file("extdata", "MCF7_Cunha_chr11p15.bed.gz", package="biscuiteer")
 vcf <- system.file("extdata", "MCF7_Cunha_header_only.vcf.gz", package="biscuiteer")
 bisc <- readBiscuit(BEDfile = bed, VCFfile = vcf, merged = FALSE)
 
 meth1DDensity(bisc)
 ```
-A matrix of methylation levels (beta values) can also be used as input to `meth1DDensity()`. This method assumes the
-column names of your matrix are the samples in the matrix. The row names can either be NULL or the CpG loci/probes.
+A matrix of methylation levels (beta values) can also be used as input to
+`meth1DDensity()`. This method assumes the column names of your matrix are the
+samples in the matrix. The row names can either be NULL or the CpG loci/probes.
 
 ## 2D Methylation Level Density
 
-The 2D methylation level density plot compares the density of average methylation levels in provided bins across two
-samples. An example of creating this plot is:
-```{r}
+The 2D methylation level density plot compares the density of average
+methylation levels in provided bins across two samples. An example of creating
+this plot is:
+
+```{r meth2d}
 orig_bed <- system.file("extdata", "MCF7_Cunha_chr11p15.bed.gz", package="biscuiteer")
 orig_vcf <- system.file("extdata", "MCF7_Cunha_header_only.vcf.gz", package="biscuiteer")
 bisc1    <- readBiscuit(BEDfile = orig_bed, VCFfile = orig_vcf, merged = FALSE)
@@ -112,7 +121,16 @@ comb <- unionize(bisc1, bisc2)
 
 meth2DDensity(comb, chr="chr11", sample_1 = "MCF7_Cunha", sample_2 = "MCF7_Cunha_shuffled")
 ```
-A matrix of methylation levels (beta values) can also be used as input to `meth2DDensity()`. This method assumes the
-column names of your matrix are the samples in the matrix. The row names must be the CpG loci/probes (i.e., the result
-of `rownames(mat) <- as.character(granges(gr))`. In either input case, there must be at least two samples in your input
-object.
+
+A matrix of methylation levels (beta values) can also be used as input to
+`meth2DDensity()`. This method assumes the column names of your matrix are the
+samples in the matrix. The row names must be the CpG loci/probes (i.e., the
+result of `rownames(mat) <- as.character(granges(gr))`. In either input case,
+there must be at least two samples in your input object.
+
+# Session Info
+
+```{r}
+sessionInfo()
+```
+
