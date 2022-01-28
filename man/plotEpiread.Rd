@@ -12,11 +12,11 @@ plotEpiread(
   show_positions = TRUE,
   unmeth_color = "white",
   meth_color = "black",
-  na_color = "darkgray",
   a_color = "#F26419",
   t_color = "#E9C46A",
   g_color = "#264653",
   c_color = "#2A9D8F",
+  na_color = "darkgray",
   background_color = "#A3D0E9"
 )
 }
