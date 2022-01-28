@@ -14,10 +14,9 @@ vignette: >
     %\VignetteEncoding[utf8]{inputenc}
 ---
 
-knitr::opts_chunk$set(
-    warning=FALSE,
-    message=FALSE
-)
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(warning=FALSE, message=FALSE)
+```
 
 # Bisplotti
 
@@ -37,6 +36,10 @@ if (!requireNamespace("BiocManager", quietly=TRUE)) {
 BiocManager::install("huishenlab/bisplotti")
 ```
 
+```{r loadLib}
+library(bisplotti)
+```
+
 # Create Plots
 
 ## Epiread
@@ -46,8 +49,8 @@ To create the lollipop epiread plots, two commands are needed. First, use the GR
 second command, `plotEpiread` uses the matrix output from `tabulateEpibed` as the input to create the lollipop plot.
 
 ```{r}
-epibed.nome     <- system.file("extdata", "hct116.nome.epiread", package="biscuiteer")
-epibed.nome.gr  <- readEpibed(epibed = epibed.nome, is.nome = TRUE, genome = "hg19")
+epibed.nome     <- system.file("extdata", "hct116.nome.epiread.gz", package="biscuiteer")
+epibed.nome.gr  <- readEpibed(epibed = epibed.nome, is.nome = TRUE, genome = "hg19", chr = "chr1")
 epibed.tab.nome <- tabulateEpibed(epibed.nome.gr)
 plotEpiread(epibed.tab.nome$gc_table)
 ```
