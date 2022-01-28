@@ -41,10 +41,10 @@ Plot the results of tabulateEpibed() as a
 quasi-lollipop plot.
 }
 \examples{
-epibed.nome <- system.file("extdata", "hct116.nome.epiread",
+epibed.nome <- system.file("extdata", "hct116.nome.epiread.gz",
                            package="biscuiteer")
 epibed.nome.gr <- readEpibed(epibed = epibed.nome, is.nome = TRUE,
-                             genome = "hg19")
+                             genome = "hg19", chr = "chr1")
 epibed.tab.nome <- tabulateEpibed(epibed.nome.gr)
 plotEpiread(epibed.tab.nome$gc_table)
 }
