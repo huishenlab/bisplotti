@@ -283,39 +283,21 @@ plotEpiread <- function(mat, plot_read_ave = TRUE,
   snp_list <- c("A", "T", "G", "C")
   # plot
 
-  if (is.cg) {
-    plt <- ggplot(mat.melt, aes(x = Var2, y = Var1)) +
-        geom_label(
-            data = subset(mat.melt, value %ni% c("M", "U")),
-            aes(label = value)
-        ) +
-        geom_point(
-            data = subset(mat.melt, value %ni% snp_list),
-            aes(fill = value), size = 6, pch = 21, color = "black"
-        ) +
-        scale_fill_manual(
-            values = c(M = meth_color, U = unmeth_color),
-            na.value = na_color
-        ) +
-        guides(color = "legend") +
-        ql_theme
-  } else {
-    plt <- ggplot(mat.melt, aes(x = Var2, y = Var1)) +
-        geom_label(
-            data = subset(mat.melt, value %ni% c("S","O")),
-            aes(label = value)
-        ) +
-        geom_point(
-            data = subset(mat.melt, value %ni% snp_list),
-            aes(fill = value), size = 6, pch = 21, color = "black"
-        ) +
-        scale_fill_manual(values = c(O=meth_color,
-                                    S=unmeth_color),
-                        na.value = na_color) +
+  plt <- ggplot(mat.melt, aes(x = Var2, y = Var1)) +
+      geom_label(
+          data = subset(mat.melt, value %ni% c("M", "U", "O", "S")),
+          aes(label = value)
+      ) +
+      geom_point(
+          data = subset(mat.melt, value %ni% snp_list),
+          aes(fill = value), size = 6, pch = 21, color = "black"
+      ) +
+      scale_fill_manual(
+          values = c(meth_color, unmeth_color),
+          na.value = na_color
+      ) +
       guides(color = "legend") +
       ql_theme
-      
-  }
   
   # average methylation
   if (plot_read_ave) {
