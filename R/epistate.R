@@ -261,28 +261,12 @@ plotEpiread <- function(mat, plot_read_ave = TRUE,
     ql_theme <- ql_theme + theme(axis.text.x = element_blank(),
                                  axis.ticks.x = element_blank())
   }
-  
-  # auto-detect input type
-  is.cg = FALSE
-  is.gc = FALSE
-  if(any(mat %in% c("M", "U"))) is.cg = TRUE
-  if(any(mat %in% c("S", "O"))) is.gc = TRUE
-  
-  # break if both are FALSE
-  if (isFALSE(is.cg) & isFALSE(is.gc)) {
-    message("Don't know what to do with input.")
-    stop("Please run tabulateEpibed() first to produce input for this function.")
-  }
-  
-  # cast to a 'melted' data frame
-  mat.melt <- reshape2::melt(mat, id.vars = rownames(mat))
-  if (!show_filtered) {
-      mat.melt <- subset(mat.melt, !is.na(value)) 
-  }
+
+  mat.melt <- .makePlotData(mat, show_filtered)
   
   snp_list <- c("A", "T", "G", "C")
-  # plot
 
+  # plot
   plt <- ggplot(mat.melt, aes(x = Var2, y = Var1)) +
       geom_label(
           data = subset(mat.melt, value %ni% c("M", "U", "O", "S")),
@@ -322,3 +306,24 @@ plotEpiread <- function(mat, plot_read_ave = TRUE,
   }
 }
 
+# helper to make the melted dataset for plotting
+.makePlotData <- function(mat, show_filtered) {
+  # auto-detect input type
+  is.cg = FALSE
+  is.gc = FALSE
+  if(any(mat %in% c("M", "U"))) is.cg = TRUE
+  if(any(mat %in% c("S", "O"))) is.gc = TRUE
+  
+  # break if both are FALSE
+  if (isFALSE(is.cg) & isFALSE(is.gc)) {
+    message("Don't know what to do with input.")
+    stop("Please run tabulateEpibed() first to produce input for this function.")
+  }
+  
+  # cast to a 'melted' data frame
+  mat.melt <- reshape2::melt(mat, id.vars = rownames(mat))
+  if (!show_filtered) {
+      mat.melt <- subset(mat.melt, !is.na(value)) 
+  }
+  return(mat.melt)
+}
