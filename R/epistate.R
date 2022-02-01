@@ -274,18 +274,6 @@ plotEpiread <- function(mat, plot_read_ave = TRUE,
     stop("Please run tabulateEpibed() first to produce input for this function.")
   }
   
-  # compute average methylation state
-  if (plot_read_ave) {
-    # ick... copy in memory
-    mat.binary <- mat
-    mat.binary[mat.binary %in% c("M", "O")] <- 1
-    mat.binary[mat.binary %in% c("U", "S")] <- 0
-    mat.binary <- apply(mat.binary, 2, as.numeric)
-    mat.meth.ave <- data.frame(ave_meth = colMeans(mat.binary, na.rm = TRUE))
-    mat.meth.ave$position <- rownames(mat.meth.ave)
-    mat.meth.ave$y <- "Average methylation status"
-  }
-  
   # cast to a 'melted' data frame
   mat.melt <- reshape2::melt(mat, id.vars = rownames(mat))
   if (!show_filtered) {
@@ -329,7 +317,15 @@ plotEpiread <- function(mat, plot_read_ave = TRUE,
       
   }
   
+  # average methylation
   if (plot_read_ave) {
+    mat.binary <- mat # ick... copy in memory
+    mat.binary[mat.binary %in% c("M", "O")] <- 1
+    mat.binary[mat.binary %in% c("U", "S")] <- 0
+    mat.binary <- apply(mat.binary, 2, as.numeric)
+    mat.meth.ave <- data.frame(ave_meth = colMeans(mat.binary, na.rm = TRUE))
+    mat.meth.ave$position <- rownames(mat.meth.ave)
+    mat.meth.ave$y <- "Average methylation status"
     plt_ave <- ggplot(mat.meth.ave, aes(x = position, y = y)) +
       geom_point(aes(fill = ave_meth), size=6, pch=21, color="black") +
       scale_fill_gradient(low = unmeth_color,
