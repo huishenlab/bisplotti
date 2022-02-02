@@ -285,20 +285,7 @@ plotEpiread <- function(mat, plot_read_ave = TRUE,
   
   # average methylation
   if (plot_read_ave) {
-    mat.binary <- mat # ick... copy in memory
-    mat.binary[mat.binary %in% c("M", "O")] <- 1
-    mat.binary[mat.binary %in% c("U", "S")] <- 0
-    mat.binary <- apply(mat.binary, 2, as.numeric)
-    mat.meth.ave <- data.frame(ave_meth = colMeans(mat.binary, na.rm = TRUE))
-    mat.meth.ave$position <- rownames(mat.meth.ave)
-    mat.meth.ave$y <- "Average methylation status"
-    plt_ave <- ggplot(mat.meth.ave, aes(x = position, y = y)) +
-      geom_point(aes(fill = ave_meth), size=6, pch=21, color="black") +
-      scale_fill_gradient(low = unmeth_color,
-                          high = meth_color,
-                          limits = c(0,1)) +
-      guides(color = "legend") +
-      ql_theme
+    plt_ave <- .plotAve(mat, meth_color, unmeth_color, ql_theme)
     return(list(epistate=plt,
                 meth_ave=plt_ave))
   } else {
@@ -326,4 +313,27 @@ plotEpiread <- function(mat, plot_read_ave = TRUE,
       mat.melt <- subset(mat.melt, !is.na(value)) 
   }
   return(mat.melt)
+}
+
+# helper to calculate ave methylation of a region and plot it
+.plotAve <- function(mat, meth_color, unmeth_color, theme) {
+    # check if input is a matrix
+    if (!is(mat, "matrix")) {
+      stop("Input needs to be a matrix")
+    }
+
+    mat[mat %in% c("M", "O")] <- 1
+    mat[mat %in% c("U", "S")] <- 0
+    mat <- apply(mat, 2, as.numeric)
+    mat.meth.ave <- data.frame(ave_meth = colMeans(mat, na.rm = TRUE))
+    mat.meth.ave$position <- rownames(mat.meth.ave)
+    mat.meth.ave$y <- "Average methylation status"
+    plt_ave <- ggplot(mat.meth.ave, aes(x = position, y = y)) +
+      geom_point(aes(fill = ave_meth), size=6, pch=21, color="black") +
+      scale_fill_gradient(low = unmeth_color,
+                          high = meth_color,
+                          limits = c(0,1)) +
+      guides(color = "legend") +
+      theme
+    return(plt_ave)
 }
