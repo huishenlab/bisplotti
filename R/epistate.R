@@ -287,7 +287,7 @@ plotEpiread <- function(mat, plot_read_ave = TRUE,
     }
 
     mat[mat %in% c("M", "O")] <- 1
-    mat[mat %in% c("U", "S")] <- 0
+    mat[mat %in% c("U", "S", "A", "T", "G", "C")] <- 0
     mat <- apply(mat, 2, as.numeric)
     mat.meth.ave <- data.frame(ave_meth = colMeans(mat, na.rm = TRUE))
     mat.meth.ave$position <- rownames(mat.meth.ave)
