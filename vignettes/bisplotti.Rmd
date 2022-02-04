@@ -50,13 +50,15 @@ To create the lollipop epiread plots, two commands are needed. First, use the
 GRanges output from `biscuiteer::readEpibed()` as input to `tabulateEpibed`,
 which turns the GRanges into a convenient matrix format. The second command,
 `plotEpiread` uses the matrix output from `tabulateEpibed` as the input to
-create the lollipop plot.
+create the lollipop plot. `epistateCaller()` can take the output of
+`tabulateEpibed()` to cluster the epireads on both CpG and GpC methylation.
 
 ```{r plotEpiread}
 epibed.nome     <- system.file("extdata", "hct116.nome.epiread.gz", package="biscuiteer")
 epibed.nome.gr  <- readEpibed(epibed = epibed.nome, is.nome = TRUE, genome = "hg19", chr = "chr1")
 epibed.tab.nome <- tabulateEpibed(epibed.nome.gr)
 plotEpiread(epibed.tab.nome$gc_table)
+epistateCaller(epibed.tab.nome)
 ```
 
 ## Multiscale

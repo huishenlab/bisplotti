@@ -358,3 +358,77 @@ plotEpiread <- function(mat, plot_read_ave = TRUE,
   }
   return(plt)
 }
+
+#' Calculate and plot a hierarchical clustering of the epireads
+#'
+#' @param mat Input matrix that comes out of tabulateEpibed()
+#' @param stringdist_method stringdist::stringdist algorithm to use (default: "hamming")
+#' @param hclust_method Clustering algorithm to use (default: "ward.D2")
+#' @param plot Whether to plot the clustered epireads (default: TRUE)
+#' 
+#' @return A hierarchical cluster (hclust) object
+#' 
+#' @import ggtree
+#' @importFrom stringdist stringdist
+#' @importFrom cowplot plot_grid
+#'
+#' @export
+#'
+#' @examples
+#' epibed.nome <- system.file("extdata", "hct116.nome.epiread.gz",
+#'                            package="biscuiteer")
+#' epibed.nome.gr <- readEpibed(epibed = epibed.nome, is.nome = TRUE,
+#'                              genome = "hg19", chr = "chr1")
+#' epibed.tab.nome <- tabulateEpibed(epibed.nome.gr)
+#' epistateCaller(epibed.tab.nome)
+epistateCaller <- function(mat,
+                           stringdist_method="hamming",
+                           hclust_method="ward.D2",
+                           plot = TRUE) {
+    # check for both cg and gc tables
+    if (is.list(mat)) {
+        stopifnot(exists("cg_table", where = mat) &
+            exists("gc_table", where = mat))
+        mat.merge <- merge(mat$cg_table, mat$gc_table, by = 0)
+        row.names(mat.merge) <- mat.merge[, 1]
+        mat.merge <- mat.merge[-1]
+    } else {
+        mat.merge <- mat
+    }
+
+    mat.merge[is.na(mat.merge) |
+        mat.merge == "A" | mat.merge == "T" | 
+        mat.merge == "G" | mat.merge == "C" |
+        mat.merge == "U" | mat.merge == "S"] <- 0
+
+    mat.merge[mat.merge == "M" | mat.merge == "O"] <- 1
+    epistates <- apply(mat.merge, 1, paste0, collapse = "")
+    hamming <- outer(epistates, epistates, stringdist, method = stringdist_method)
+    hcluster <- hclust(as.dist(hamming), method = hclust_method)
+    if (!plot) {
+        return(hcluster)
+    }
+
+    if (!is.list(mat)) {
+        matplotdata <- list(.makePlotData(mat, show_filtered = FALSE))
+    } else {
+        matplotdata <- lapply(mat, function(meth_table) {
+            .makePlotData(meth_table, show_filtered = FALSE)
+        })
+    }
+
+    tree <- ggtree(as.dendrogram(hcluster), branch.length = "none")
+
+    ql_theme <- .set_ql_theme(T, T)
+    plots <- lapply(matplotdata, function(m) {
+      
+      m$Var1 <- factor(m$Var1, levels = rev(get_taxa_name(tree)))
+      plt <- .epiClustPlot(m, "black", "white", "grey", ql_theme)
+    
+      clust_plot <- plot_grid(tree, NULL, plt,
+          rel_widths = c(1, -0.05, 2), nrow = 1, align = 'h'
+      )
+       clust_plot
+      })
+    return(plots)
+}
