@@ -6,6 +6,7 @@
 #' @param gr The epibed GRanges object from readEpibed()
 #' @param region Either a GRanges of regions to subset to or explicit region (e.g., chr6:1555-1900)
 #' @param filter_empty_reads Whether to filter out reads that contain no methylated (or SNP) sites (default: TRUE)
+#' @param include_snps Whether to include SNPs or not (default: FALSE)
 #'
 #' @return A matrix or list of matrices
 #'
@@ -23,7 +24,8 @@
 #'
 tabulateEpibed <- function(gr,
                            region = NULL,
-                           filter_empty_reads = TRUE) {
+                           filter_empty_reads = TRUE,
+                           include_snps = FALSE) {
 
     # check if a GRanges
     stopifnot(is(gr, "GRanges"))
@@ -43,14 +45,14 @@ tabulateEpibed <- function(gr,
     # char shut_acc = 'S';
 
     # we need to build up a table of CGH and GCH
-    cg_table <- .tabulateRLE(gr, cg = TRUE)
+    cg_table <- .tabulateRLE(gr, include_snps = include_snps, cg = TRUE)
     cg_table <- .filterToRegion(cg_table, region = region)
 
     if (filter_empty_reads) {
         cg_table <- .filterEmptyReads(cg_table)
     }
     if (is.nome) {
-        gc_table <- .tabulateRLE(gr, cg = FALSE)
+        gc_table <- .tabulateRLE(gr, include_snps = include_snps, cg = FALSE)
         gc_table <- .filterToRegion(gc_table, region = region)
 
         if (filter_empty_reads) {
@@ -65,11 +67,18 @@ tabulateEpibed <- function(gr,
 }
 
 # helper to tabulate to a CGH or GCH table
-.tabulateRLE <- function(gr, cg = TRUE) {
+.tabulateRLE <- function(gr, include_snps, cg = TRUE) {
     # there can be duplicate read names if not collapsed to fragment
     # this can occur if reads 1 and 2 originate from the "same" strbnd
     # make read names unique ahead of time...
     gr$readname <- make.unique(gr$readname)
+
+    keep_cg <- c("M", "U")
+    keep_gc <- c("O", "S")
+    if (include_snps) {
+        keep_cg <- c(keep_cg, c("A", "T", "G", "C"))
+        keep_gc <- c(keep_gc, c("A", "T", "G", "C"))
+    }
 
     # iterate through each read and decompose to position
     readlvl_gr <- do.call(
@@ -93,9 +102,9 @@ tabulateEpibed <- function(gr,
 
                 # keep the C status
                 if (cg) {
-                    rle_vec_c <- rle_vec[rle_vec %in% c("M", "U", "A", "T", "G", "C")]
+                    rle_vec_c <- rle_vec[rle_vec %in% keep_cg]
                 } else {
-                    rle_vec_c <- rle_vec[rle_vec %in% c("O", "S", "A", "T", "G", "C")]
+                    rle_vec_c <- rle_vec[rle_vec %in% keep_gc]
                 }
                 if (!length(rle_vec_c)) {
                     return(GRanges(c(seqnames=NULL,ranges=NULL,strand=NULL)))
