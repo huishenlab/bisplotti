@@ -1,3 +1,3 @@
-## bisplotly 0.1.0
+## bisplotti 0.1.0
 
 * Initial addition of functions and tests
