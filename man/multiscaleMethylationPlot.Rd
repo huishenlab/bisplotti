@@ -2,24 +2,27 @@
 % Please edit documentation in R/multiscalePlot.R
 \name{multiscaleMethylationPlot}
 \alias{multiscaleMethylationPlot}
-\title{Create the multiscale plot from a list of GRanges}
+\title{Create the multiscale plot from a GRangesList}
 \usage{
 multiscaleMethylationPlot(
   grl,
   colors = "YlGnBu",
   na_color = "darkgray",
   what = "score",
+  config = NULL,
   chr.to.plot = NULL
 )
 }
 \arguments{
 \item{grl}{GRangesList of a single set of multiscale BED files}
 
-\item{colors}{RColorBrewer color scheme to use (default: YlGnBu)}
+\item{colors}{RColorBrewer or viridis color scheme to use (default: YlGnBu)}
 
 \item{na_color}{Color to give NA values (default: darkgray)}
 
 \item{what}{Column to plot (default: score)}
+
+\item{config}{path to the bin/config.yaml of the multiscale Snakemake}
 
 \item{chr.to.plot}{Chromosome to plot, all if NULL (default: NULL)}
 }
@@ -27,7 +30,7 @@ multiscaleMethylationPlot(
 a ggplot2 object of the multiscale plot
 }
 \description{
-Create the multiscale plot from a list of GRanges
+Create the multiscale plot from a GRangesList
 }
 \examples{
 
@@ -39,9 +42,9 @@ files <- lapply(
     }
 )
 cnames <- list.files(files.loc, pattern="Heyn_2012_100yr")
-cnames <- gsub("Heyn_2012_100yr", "100yr", cnames)
+cnames <- gsub("Heyn_2012_100yr_subset_", "", cnames)
 cnames <- gsub(".bed.gz", "", cnames)
-names(files) <- cnames
+names(files) <- as.numeric(cnames)
 
 files.grl <- as(files, "GRangesList")
 

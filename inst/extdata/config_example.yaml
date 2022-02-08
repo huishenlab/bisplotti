@@ -1,0 +1,33 @@
+# Path to FAI-index of reference used
+# Example -  reference: /varidata/research/genomicdata/genomes/hg19/hg19.fa.fai
+reference_fai: "null"
+
+# Path to targets BED file (can be gzipped)
+# Example - targets: example/targets.bed.gz
+targets: "null"
+
+# Step size of values along x-axis of multiscale plot
+# The multiscale plot will find the average methylation value in a bin size of 10^X (X defined by bounds below) centered
+#     on each x value
+x_step: 10000
+
+# Bounds of the exponents used when generating the multiscale plot
+# Exponents will run from bounds['min'] to bounds['max'], inclusive, with step size of bounds['step']
+bounds:
+    min: 6
+    max: 7
+    step: 0.1
+
+# Environment modules to load
+# Pipeline requires bedtools, but will work as long as bedtools is in PATH
+envmodules:
+    bedtools: "null"
+
+# Parameters to use when running pipeline in a cluster environment
+hpc_parameters:
+    low_walltime: 1:00:00
+    mid_walltime: 12:00:00
+    max_walltime: 24:00:00
+    low_memory_gb: 10
+    mid_memory_gb: 100
+    max_memory_gb: 250
