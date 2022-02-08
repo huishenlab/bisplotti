@@ -1,207 +1,228 @@
-#' Tabulate to a read or fragment level matrix for
-#' CGH or GCH context methylation. The input for this
-#' function is the GRanges output from readEpibed().
-#' It will auto-detect whether this a BS-seq or a
-#' NOMe-seq run and tabulate accordingly.
+#' Tabulate to a read or fragment level matrix for CGH or GCH context methylation.
+#'
+#' The input for this function is the GRanges output from biscuiteer::readEpibed().
+#' It will auto-detect whether this a BS-seq or a NOMe-seq run and tabulate accordingly.
 #'
 #' @param gr The epibed GRanges object from readEpibed()
-#' @param region Either a GRanges of regions to subset to or explicit region (e.g. chr6:1555-1900)
-#' @param filter_empty_reads Whether to filter out reads that contain no methylated sites (default is TRUE)
-#' 
+#' @param region Either a GRanges of regions to subset to or explicit region (e.g., chr6:1555-1900)
+#' @param filter_empty_reads Whether to filter out reads that contain no methylated (or SNP) sites (default: TRUE)
+#'
 #' @return A matrix or list of matrices
+#'
 #' @export
-#' 
+#'
 #' @import GenomicRanges
 #'
 #' @examples
+#'
 #' epibed.nome <- system.file("extdata", "hct116.nome.epiread.gz",
 #'                            package="biscuiteer")
 #' epibed.nome.gr <- readEpibed(epibed = epibed.nome, is.nome = TRUE,
 #'                              genome = "hg19", chr = "chr1")
 #' epibed.tab.nome <- tabulateEpibed(epibed.nome.gr)
-
+#'
 tabulateEpibed <- function(gr,
                            region = NULL,
                            filter_empty_reads = TRUE) {
-  
-  # check if a GRanges
-  stopifnot(is(gr, "GRanges"))
-  
-  # autodetect if it's a NOMe epibed
-  is.nome = FALSE
-  if ("GC_decode" %in% names(mcols(gr))) is.nome = TRUE
-  
-  # tabulate strings
-  # char filtered = 'F';
-  # char ignored  = 'x';
-  # char deletion = 'D';
-  # char softclip = 'P';
-  # char methylat = 'M';
-  # char unmethyl = 'U';
-  # char open_acc = 'O';
-  # char shut_acc = 'S';
-  
-  # we need to build up a table of CGH and GCH
-  # cg_table <- .tabulateCGH(gr)
-  cg_table <- .tabulateRLE(gr, cg = TRUE)
-  cg_table <- .filterToRegion(cg_table,
-                            region = region)
-  if (filter_empty_reads) {
-    cg_table <- .filterEmptyReads(cg_table)
-  }
-  if (is.nome) {
-    gc_table <- .tabulateRLE(gr, cg = FALSE)
-    gc_table <- .filterToRegion(gc_table,
-                              region = region)
+
+    # check if a GRanges
+    stopifnot(is(gr, "GRanges"))
+
+    # autodetect if it's a NOMe epibed
+    is.nome = FALSE
+    if ("GC_decode" %in% names(mcols(gr))) is.nome = TRUE
+
+    # tabulate strings
+    # char filtered = 'F';
+    # char ignored  = 'x';
+    # char deletion = 'D';
+    # char softclip = 'P';
+    # char methylat = 'M';
+    # char unmethyl = 'U';
+    # char open_acc = 'O';
+    # char shut_acc = 'S';
+
+    # we need to build up a table of CGH and GCH
+    cg_table <- .tabulateRLE(gr, cg = TRUE)
+    cg_table <- .filterToRegion(cg_table, region = region)
+
     if (filter_empty_reads) {
-      gc_table <- .filterEmptyReads(gc_table)
+        cg_table <- .filterEmptyReads(cg_table)
     }
-    return(list(cg_table = cg_table,
-                gc_table = gc_table))
-  }
-  
-  return(cg_table)
+    if (is.nome) {
+        gc_table <- .tabulateRLE(gr, cg = FALSE)
+        gc_table <- .filterToRegion(gc_table, region = region)
+
+        if (filter_empty_reads) {
+            gc_table <- .filterEmptyReads(gc_table)
+        }
+
+        return(list(cg_table = cg_table,
+                    gc_table = gc_table))
+    }
+
+    return(cg_table)
 }
 
 # helper to tabulate to a CGH or GCH table
 .tabulateRLE <- function(gr, cg = TRUE) {
-  # there can be duplicate read names if not collapsed to fragment
-  # this can occur if reads 1 and 2 originate from the "same" strand
-  # make read names unique ahead of time...
-  gr$readname <- make.unique(gr$readname)
-  
-  # iterate through each read and decompose to position
-  readlvl_gr <- do.call("c", lapply(X = 1:length(gr),
-                                    FUN = function(x) {
-    sub_gr <- gr[x]
-    # generate a per base array
-    pos_vec <- seq(start(sub_gr), end(sub_gr))
-    if (cg) {
-      rle_vec <- unlist(strsplit(sub_gr$CG_decode, split = ""))
-    } else {
-      rle_vec <- unlist(strsplit(sub_gr$GC_decode, split = ""))
-    }
-    names(rle_vec) <- pos_vec
-    # filter out insertions
-    rle_vec <- .filterInsertions(rle_vec)
-    # keep the C status
-    if (cg) {
-      rle_vec_c <- rle_vec[rle_vec %in% c("M", "U", "A", "T", "G", "C")]
-    } else {
-      rle_vec_c <- rle_vec[rle_vec %in% c("O", "S", "A", "T", "G", "C")]
-    }
-    if (!length(rle_vec_c)) {
-      return(GRanges(c(seqnames=NULL,ranges=NULL,strand=NULL)))
-    }
-    # turn back into GRanges
-    rle_c_df <- data.frame(chr = seqnames(sub_gr),
-                            start = names(rle_vec_c),
-                            end = names(rle_vec_c),
-                            meth_status = rle_vec_c,
-                            read_id = sub_gr$readname)
-    return(makeGRangesFromDataFrame(rle_c_df,
-                                    keep.extra.columns = TRUE))
-  }))
-  
-  # find the dimension of collapsed Cs to fill in the matrix
-  readlvl_gr_len <- length(unique(readlvl_gr))
-  # make an empty matrix to fill in 
-  readlvl_emp_mat <- matrix(data = NA,
-                            nrow = length(unique(readlvl_gr$read_id)),
-                            ncol = readlvl_gr_len)
-  rownames(readlvl_emp_mat) <- unique(readlvl_gr$read_id)
-  colnames(readlvl_emp_mat) <- as.character(granges(unique(readlvl_gr)))
-  
-  # go by read and extract out methylation states
-  readlvl_gr_mat <- as.matrix(cbind(as.character(granges(readlvl_gr)),
-                                    readlvl_gr$read_id,
-                                    readlvl_gr$meth_status))
-  readlvl_emp_mat[readlvl_gr_mat[,c(2,1)]] <- readlvl_gr_mat[,3]
-  return(readlvl_emp_mat)
+    # there can be duplicate read names if not collapsed to fragment
+    # this can occur if reads 1 and 2 originate from the "same" strbnd
+    # make read names unique ahead of time...
+    gr$readname <- make.unique(gr$readname)
+
+    # iterate through each read and decompose to position
+    readlvl_gr <- do.call(
+        "c",
+        lapply(
+            X = 1:length(gr),
+            FUN = function(x) {
+                sub_gr <- gr[x]
+
+                # generate a per base array
+                pos_vec <- seq(start(sub_gr), end(sub_gr))
+                if (cg) {
+                    rle_vec <- unlist(strsplit(sub_gr$CG_decode, split = ""))
+                } else {
+                    rle_vec <- unlist(strsplit(sub_gr$GC_decode, split = ""))
+                }
+                names(rle_vec) <- pos_vec
+
+                # filter out insertions
+                rle_vec <- .filterInsertions(rle_vec)
+
+                # keep the C status
+                if (cg) {
+                    rle_vec_c <- rle_vec[rle_vec %in% c("M", "U", "A", "T", "G", "C")]
+                } else {
+                    rle_vec_c <- rle_vec[rle_vec %in% c("O", "S", "A", "T", "G", "C")]
+                }
+                if (!length(rle_vec_c)) {
+                    return(GRanges(c(seqnames=NULL,ranges=NULL,strand=NULL)))
+                }
+
+                # turn back into GRanges
+                rle_c_df <- data.frame(chr = seqnames(sub_gr),
+                                       start = names(rle_vec_c),
+                                       end = names(rle_vec_c),
+                                       meth_status = rle_vec_c,
+                                       read_id = sub_gr$readname)
+
+                return(makeGRangesFromDataFrame(rle_c_df,
+                                                keep.extra.columns = TRUE))
+            }
+        )
+    )
+
+    # find the dimension of collapsed Cs to fill in the matrix
+    readlvl_gr_len <- length(unique(readlvl_gr))
+
+    # make an empty matrix to fill in
+    readlvl_emp_mat <- matrix(data = NA,
+                              nrow = length(unique(readlvl_gr$read_id)),
+                              ncol = readlvl_gr_len)
+    rownames(readlvl_emp_mat) <- unique(readlvl_gr$read_id)
+    colnames(readlvl_emp_mat) <- as.character(granges(unique(readlvl_gr)))
+
+    # go by read and extract out methylation states
+    readlvl_gr_mat <- as.matrix(cbind(as.character(granges(readlvl_gr)),
+                                      readlvl_gr$read_id,
+                                      readlvl_gr$meth_status))
+    readlvl_emp_mat[readlvl_gr_mat[,c(2,1)]] <- readlvl_gr_mat[,3]
+
+    return(readlvl_emp_mat)
 }
 
 # helper to filter out indels and softclips
 # this is needed to reset coordinates properly
 .filterInsertions <- function(readlvl_vec) {
-  # the input here is a named vec of positions
-  # we need to pull everything out that is not
-  # a lower case a,c,g,t
-  # we can correct for new starts if someone has
-  # not filtered the first few bases
-  exclude_bases <- c("a", "c",
-                     "g", "t")
-  # note: if a SNP has a base, it will be upper case
-  # case sensitivity matters here
-  # grab the start from the original string
-  strt <- names(readlvl_vec)[1]
-  filtrd_vec <- readlvl_vec[!readlvl_vec %in% exclude_bases]
-  # short circuit if nothing is filtered
-  if (suppressWarnings(all(names(filtrd_vec) == names(readlvl_vec)))) {
-    return(readlvl_vec)
-  }
-  # if the first base is no longer equal to the start
-  # from original read, reset to new start
-  if (strt != names(filtrd_vec)[1]) {
-    strt <- names(filtrd_vec)[1]
+    # the input here is a named vec of positions
+    # we need to pull everything out that is not a lower case a,c,g,t
+    # we can correct for new starts if someone has not filtered the first few bases
+    exclude_bases <- c("a", "c", "g", "t")
+
+    # note: if a SNP has a base, it will be upper case
+    # case sensitivity matters here
+    # grab the start from the original string
+    strt <- names(readlvl_vec)[1]
+    filtrd_vec <- readlvl_vec[!readlvl_vec %in% exclude_bases]
+
+    # short circuit if nothing is filtered
+    if (suppressWarnings(all(names(filtrd_vec) == names(readlvl_vec)))) {
+        return(readlvl_vec)
     }
-  names(filtrd_vec) <- seq(as.numeric(strt),
-                           c(as.numeric(strt)+length(filtrd_vec)-1))
-  return(filtrd_vec)
+
+    # if the first base is no longer equal to the start from original read, reset to new start
+    if (strt != names(filtrd_vec)[1]) {
+        strt <- names(filtrd_vec)[1]
+    }
+    names(filtrd_vec) <- seq(as.numeric(strt),
+                             c(as.numeric(strt)+length(filtrd_vec)-1))
+
+    return(filtrd_vec)
 }
 
 # helper to only keep sites within a given region of interest
 .filterToRegion <- function(mat,
                             region = NULL) {
-  if (is.null(region)) return(mat)
-  if (!is(region, "GRanges")) {
-    # attempt to parse the standard chr#:start-end
-    if (!grepl("\\:", region) & grepl("\\-", region)) {
-      message("Not sure how to parse ", region)
-      message("region should either be a GRanges of a specfic region or")
-      stop("region should look something like 'chr6:1555-1900'")
-    }
-    chr <- strsplit(region, ":")[[1]][1]
-    coords <- strsplit(region, ":")[[1]][2]
-    strt <- strsplit(coords, "-")[[1]][1]
-    end <- strsplit(coords, "-")[[1]][2]
-    pos_to_include <- paste0(chr, ":",
-                             seq(strt, end))
-  } else {
-    # it's possible that multiple regions could be supplied...
-    if (length(region > 1) & is(region, "GRanges")) {
-      pos_to_include <- do.call(c, lapply(1:length(region), function(r) {
-        region.sub <- region[r]
-        return(paste0(seqnames(region.sub), ":",
-                      seq(start(region),
-                          end(region))))
-      }))
+
+    # do nothing if NULL region
+    if (is.null(region)) return(mat)
+
+    if (!is(region, "GRanges")) {
+        # attempt to parse the standard chr#:start-end
+        if (!grepl("\\:", region) & grepl("\\-", region)) {
+            message("Not sure how to parse ", region)
+            message("region should either be a GRanges of a specfic region or")
+            stop("region should look something like 'chr6:1555-1900'")
+        }
+        chr <- strsplit(region, ":")[[1]][1]
+        coords <- strsplit(region, ":")[[1]][2]
+        strt <- strsplit(coords, "-")[[1]][1]
+        end <- strsplit(coords, "-")[[1]][2]
+        pos_to_include <- paste0(chr, ":", seq(strt, end))
     } else {
-      # this is if a single region is supplied as a GRanges
-      stopifnot(is(region, "GRanges"))
-      pos_to_include <- paste0(seqnames(chr), ":",
-                               seq(start(region),
-                                   end(region)))
+        # it's possible that multiple regions could be supplied...
+        if (length(region > 1) & is(region, "GRanges")) {
+            pos_to_include <- do.call(
+                c,
+                lapply(
+                    1:length(region),
+                    function(r) {
+                        region.sub <- region[r]
+                        return(paste0(seqnames(region.sub), ":", seq(start(region), end(region))))
+                    }
+                )
+            )
+        } else {
+            # this is if a single region is supplied as a GRanges
+            stopifnot(is(region, "GRanges"))
+            pos_to_include <- paste0(seqnames(chr), ":", seq(start(region), end(region)))
+        }
     }
-  }
-  # subset
-  mat.sub <- mat[,colnames(mat) %in% pos_to_include]
-  # order
-  mat.sub <- mat.sub[,order(colnames(mat.sub))]
-  return(mat.sub)
+
+    # subset to positions to include
+    mat.sub <- mat[,colnames(mat) %in% pos_to_include]
+
+    # order
+    mat.sub <- mat.sub[,order(colnames(mat.sub))]
+
+    return(mat.sub)
 }
 
-# helper to remove empty reads
-# an 'empty' read is one with all NAs
+# helper to remove empty reads (i.e., reads with all NAs)
+# input is a matrix after tabulateEpiread is done
 .filterEmptyReads <- function(mat) {
-  # input is a matrix after tabulateEpiread is done
-  # filter reads
-  mat.sub <- mat[rowMeans(is.na(mat)) < 1,,drop=FALSE]
-  # order
-  mat.sub <- mat.sub[,order(colnames(mat.sub)),drop=FALSE]
-  return(mat.sub)
+    # filter reads
+    mat.sub <- mat[rowMeans(is.na(mat)) < 1,,drop=FALSE]
+
+    # order
+    mat.sub <- mat.sub[,order(colnames(mat.sub)),drop=FALSE]
+
+    return(mat.sub)
 }
 
-#' Plot the results of tabulateEpibed() as a 
+#' Plot the results of tabulateEpibed() as a
 #' quasi-lollipop plot.
 #'
 #' @param mat Input matrix that comes out of tabulateEpibed()
@@ -212,12 +233,12 @@ tabulateEpibed <- function(gr,
 #' @param meth_color What color should the methylated states be (default: 'black')
 #' @param unmeth_color What color should the unmethylated states be (default: 'white')
 #' @param na_color What color should the NA values be (default: 'darkgray')
-#' 
+#'
 #' @return An epiread ggplot object or list of ggplot objects if plot_read_ave is TRUE
-#' 
+#'
 #' @import ggplot2
 #' @importFrom reshape2 melt
-#' 
+#'
 #' @export
 #'
 #' @examples
@@ -235,18 +256,19 @@ plotEpiread <- function(mat, plot_read_ave = TRUE,
                         unmeth_color = "white",
                         meth_color = "black",
                         na_color = "darkgray") {
-  
+
   # check if input is a matrix
+    # TODO: Make this message state that it should be one of the matrices from tabulateEpibed if it's a list of matrices
   if (!is(mat, "matrix")) {
     stop("Input needs to be a matrix generated by tabulateEpibed()")
   }
-  
+
   mat.melt <- .makePlotData(mat, show_filtered)
-  
+
   # plot epiread
   ql_theme <- .set_ql_theme(show_readnames, show_positions)
   plt <- .epiClustPlot(mat.melt, meth_color, unmeth_color, na_color, ql_theme)
-  
+
   # average methylation
   if (plot_read_ave) {
     plt_ave <- .plotAve(mat, meth_color, unmeth_color, ql_theme)
@@ -264,17 +286,17 @@ plotEpiread <- function(mat, plot_read_ave = TRUE,
   is.gc = FALSE
   if(any(mat %in% c("M", "U"))) is.cg = TRUE
   if(any(mat %in% c("S", "O"))) is.gc = TRUE
-  
+
   # break if both are FALSE
   if (isFALSE(is.cg) & isFALSE(is.gc)) {
     message("Don't know what to do with input.")
     stop("Please run tabulateEpibed() first to produce input for this function.")
   }
-  
+
   # cast to a 'melted' data frame
   mat.melt <- reshape2::melt(mat, id.vars = rownames(mat))
   if (!show_filtered) {
-      mat.melt <- subset(mat.melt, !is.na(value)) 
+      mat.melt <- subset(mat.melt, !is.na(value))
   }
   return(mat.melt)
 }
@@ -313,13 +335,13 @@ plotEpiread <- function(mat, plot_read_ave = TRUE,
                                hjust = 1),
     panel.grid.major.x = element_blank(),
     panel.grid.major.y = element_line(color = "black"))
-  
+
   if (!show_readnames) {
   # set the theme
   ql_theme <- ql_theme + theme(axis.text.y = element_blank(),
                                axis.ticks.y = element_blank())
   }
-  
+
   if (!show_positions) {
   ql_theme <- ql_theme + theme(axis.text.x = element_blank(),
                                axis.ticks.x = element_blank())
@@ -365,9 +387,9 @@ plotEpiread <- function(mat, plot_read_ave = TRUE,
 #' @param stringdist_method stringdist::stringdist algorithm to use (default: "hamming")
 #' @param hclust_method Clustering algorithm to use (default: "ward.D2")
 #' @param plot Whether to plot the clustered epireads (default: TRUE)
-#' 
+#'
 #' @return A hierarchical cluster (hclust) object
-#' 
+#'
 #' @import ggtree
 #' @importFrom stringdist stringdist
 #' @importFrom cowplot plot_grid
@@ -397,7 +419,7 @@ epistateCaller <- function(mat,
     }
 
     mat.merge[is.na(mat.merge) |
-        mat.merge == "A" | mat.merge == "T" | 
+        mat.merge == "A" | mat.merge == "T" |
         mat.merge == "G" | mat.merge == "C" |
         mat.merge == "U" | mat.merge == "S"] <- 0
 
@@ -421,10 +443,10 @@ epistateCaller <- function(mat,
 
     ql_theme <- .set_ql_theme(T, T)
     plots <- lapply(matplotdata, function(m) {
-      
+
       m$Var1 <- factor(m$Var1, levels = rev(get_taxa_name(tree)))
       plt <- .epiClustPlot(m, "black", "white", "grey", ql_theme)
-    
+
       clust_plot <- plot_grid(tree, NULL, plt,
           rel_widths = c(1, -0.05, 2), nrow = 1, align = 'h'
       )
