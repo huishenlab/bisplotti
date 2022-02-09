@@ -107,7 +107,13 @@ tabulateEpibed <- function(gr,
                     rle_vec_c <- rle_vec[rle_vec %in% keep_gc]
                 }
                 if (!length(rle_vec_c)) {
-                    return(GRanges(c(seqnames=NULL,ranges=NULL,strand=NULL)))
+                    rle_c_df <- data.frame(chr = seqnames(sub_gr),
+                                      start = start(sub_gr),
+                                      end = start(sub_gr),
+                                      meth_status = NA,
+                                      read_id = sub_gr$readname)
+                    return(makeGRangesFromDataFrame(rle_c_df,
+                                                    keep.extra.columns = TRUE))
                 }
 
                 # turn back into GRanges
