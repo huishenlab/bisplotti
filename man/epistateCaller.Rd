@@ -24,13 +24,15 @@ epistateCaller(
 A hierarchical cluster (hclust) object
 }
 \description{
-Calculate and plot a hierarchical clustering of the epireads
+WARNING: This is a beta function and should not be used for publication level analyses!!!!
 }
 \examples{
+
 epibed.nome <- system.file("extdata", "hct116.nome.epiread.gz",
                            package="biscuiteer")
 epibed.nome.gr <- readEpibed(epibed = epibed.nome, is.nome = TRUE,
                              genome = "hg19", chr = "chr1")
 epibed.tab.nome <- tabulateEpibed(epibed.nome.gr)
 epistateCaller(epibed.tab.nome)
+
 }

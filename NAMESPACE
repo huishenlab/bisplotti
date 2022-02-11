@@ -2,7 +2,6 @@
 
 export(averagePerBin)
 export(averagePerBinBSseqLike)
-export(epistateCaller)
 export(getSeqLengths)
 export(mergeMCols)
 export(meth1DDensity)

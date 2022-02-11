@@ -424,6 +424,8 @@ plotEpiread <- function(mat,
 
 #' Calculate and plot a hierarchical clustering of the epireads
 #'
+#' WARNING: This is a beta function and should not be used for publication level analyses!!!!
+#'
 #' @param mat Input matrix that comes out of tabulateEpibed()
 #' @param stringdist_method stringdist::stringdist algorithm to use (default: "hamming")
 #' @param hclust_method Clustering algorithm to use (default: "ward.D2")
@@ -434,8 +436,6 @@ plotEpiread <- function(mat,
 #' @import ggtree
 #' @importFrom stringdist stringdist
 #' @importFrom cowplot plot_grid
-#'
-#' @export
 #'
 #' @examples
 #'
