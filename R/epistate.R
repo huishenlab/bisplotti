@@ -344,15 +344,21 @@ plotEpiread <- function(mat,
     }
 
     mat[mat %in% c("M", "O")] <- 1
-    mat[mat %in% c("U", "S", "A", "T", "G", "C")] <- 0
+    mat[mat %in% c("U", "S")] <- 0
+    mat[mat %in% c("A", "T", "G", "C")] <- -1
+
     mat <- apply(mat, 2, as.numeric)
     mat.meth.avg <- data.frame(avg_meth = colMeans(mat, na.rm = TRUE))
     mat.meth.avg <- na.omit(mat.meth.avg) # remove empty rows that are somehow making it all the way here
+    mat.meth.avg$avg_meth <- ifelse(mat.meth.avg$avg_meth < 0, NA, mat.meth.avg$avg_meth)
+
     mat.meth.avg$position <- rownames(mat.meth.avg)
-    mat.meth.avg$y <- "Average methylation status"
+    mat.meth.avg$y <- ifelse(is.na(mat.meth.avg$avg_meth), "SNP status", "Average methylation status")
+
     plt_avg <- ggplot(mat.meth.avg, aes(x = position, y = y)) +
-        geom_point(aes(fill = avg_meth), size=6, pch=21, color="black") +
+        geom_point(aes(fill = avg_meth), size=6, pch=21, color="black", na.rm=TRUE) +
         scale_fill_gradient(low = unmeth_color, high = meth_color, limits = c(0,1)) +
+        scale_y_discrete(limits = c("Average methylation status")) +
         guides(color = "legend") +
         theme
 
