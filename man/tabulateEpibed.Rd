@@ -2,35 +2,37 @@
 % Please edit documentation in R/epistate.R
 \name{tabulateEpibed}
 \alias{tabulateEpibed}
-\title{Tabulate to a read or fragment level matrix for
-CGH or GCH context methylation. The input for this
-function is the GRanges output from readEpibed().
-It will auto-detect whether this a BS-seq or a
-NOMe-seq run and tabulate accordingly.}
+\title{Tabulate to a read or fragment level matrix for CGH or GCH context methylation.}
 \usage{
-tabulateEpibed(gr, region = NULL, filter_empty_reads = TRUE)
+tabulateEpibed(
+  gr,
+  region = NULL,
+  include_empty_reads = FALSE,
+  include_snps = FALSE
+)
 }
 \arguments{
 \item{gr}{The epibed GRanges object from readEpibed()}
 
-\item{region}{Either a GRanges of regions to subset to or explicit region (e.g. chr6:1555-1900)}
+\item{region}{Either a GRanges of regions to subset to or explicit region (e.g., chr6:1555-1900)}
 
-\item{filter_empty_reads}{Whether to filter out reads that contain no methylated sites (default is TRUE)}
+\item{include_empty_reads}{Whether to include reads that contain no methylated (or SNP) sites (default: FALSE)}
+
+\item{include_snps}{Whether to include SNPs or not (default: FALSE)}
 }
 \value{
 A matrix or list of matrices
 }
 \description{
-Tabulate to a read or fragment level matrix for
-CGH or GCH context methylation. The input for this
-function is the GRanges output from readEpibed().
-It will auto-detect whether this a BS-seq or a
-NOMe-seq run and tabulate accordingly.
+The input for this function is the GRanges output from biscuiteer::readEpibed().
+It will auto-detect whether this a BS-seq or a NOMe-seq run and tabulate accordingly.
 }
 \examples{
+
 epibed.nome <- system.file("extdata", "hct116.nome.epiread.gz",
                            package="biscuiteer")
 epibed.nome.gr <- readEpibed(epibed = epibed.nome, is.nome = TRUE,
                              genome = "hg19", chr = "chr1")
 epibed.tab.nome <- tabulateEpibed(epibed.nome.gr)
+
 }

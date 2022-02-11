@@ -2,49 +2,52 @@
 % Please edit documentation in R/epistate.R
 \name{plotEpiread}
 \alias{plotEpiread}
-\title{Plot the results of tabulateEpibed() as a
-quasi-lollipop plot.}
+\title{Plot the results of tabulateEpibed() as a quasi-lollipop plot.}
 \usage{
 plotEpiread(
   mat,
-  plot_read_ave = TRUE,
+  plot_read_avg = TRUE,
   show_readnames = TRUE,
   show_positions = TRUE,
-  show_filtered = FALSE,
+  show_all_points = FALSE,
   unmeth_color = "white",
   meth_color = "black",
-  na_color = "darkgray"
+  na_color = "grey"
 )
 }
 \arguments{
 \item{mat}{Input matrix that comes out of tabulateEpibed()}
 
-\item{plot_read_ave}{Whether to also plot the average methylation state (default: TRUE)}
+\item{plot_read_avg}{Whether to also plot the average methylation state (default: TRUE)}
 
 \item{show_readnames}{Whether to show the read names (default: TRUE)}
 
 \item{show_positions}{Whether to show the genomic positions (default: TRUE)}
 
-\item{show_filtered}{Whether to show the filtered values (default: FALSE)}
+\item{show_all_points}{Whether to show all points (i.e., empty reads, unknown, and filtered sites) (default: FALSE)}
 
 \item{unmeth_color}{What color should the unmethylated states be (default: 'white')}
 
 \item{meth_color}{What color should the methylated states be (default: 'black')}
 
-\item{na_color}{What color should the NA values be (default: 'darkgray')}
+\item{na_color}{What color should the NA values be (default: 'grey')}
 }
 \value{
-An epiread ggplot object or list of ggplot objects if plot_read_ave is TRUE
+An epiread ggplot object or list of ggplot objects if plot_read_avg is TRUE
 }
 \description{
-Plot the results of tabulateEpibed() as a
-quasi-lollipop plot.
+NOTE: If you run tabulateEpibed() in NOMe mode with include_empty_reads = TRUE,
+then it is highly suggested you run plotEpiread() with show_all_points = TRUE also.
+If not, it is possible that reads in the CG and GC plots will not line up, depending
+on if there are empty reads in one plot, but not the other.
 }
 \examples{
+
 epibed.nome <- system.file("extdata", "hct116.nome.epiread.gz",
                            package="biscuiteer")
 epibed.nome.gr <- readEpibed(epibed = epibed.nome, is.nome = TRUE,
                              genome = "hg19", chr = "chr1")
 epibed.tab.nome <- tabulateEpibed(epibed.nome.gr)
 plotEpiread(epibed.tab.nome$gc_table)
+
 }
