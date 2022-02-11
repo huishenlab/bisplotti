@@ -253,7 +253,7 @@ tabulateEpibed <- function(gr,
 #' on if there are empty reads in one plot, but not the other.
 #'
 #' @param mat Input matrix that comes out of tabulateEpibed()
-#' @param plot_read_ave Whether to also plot the average methylation state (default: TRUE)
+#' @param plot_read_avg Whether to also plot the average methylation state (default: TRUE)
 #' @param show_readnames Whether to show the read names (default: TRUE)
 #' @param show_positions Whether to show the genomic positions (default: TRUE)
 #' @param show_all_points Whether to show all points (i.e., empty reads, unknown, and filtered sites) (default: FALSE)
@@ -261,7 +261,7 @@ tabulateEpibed <- function(gr,
 #' @param unmeth_color What color should the unmethylated states be (default: 'white')
 #' @param na_color What color should the NA values be (default: 'grey')
 #'
-#' @return An epiread ggplot object or list of ggplot objects if plot_read_ave is TRUE
+#' @return An epiread ggplot object or list of ggplot objects if plot_read_avg is TRUE
 #'
 #' @import ggplot2
 #' @importFrom reshape2 melt
@@ -278,7 +278,7 @@ tabulateEpibed <- function(gr,
 #' plotEpiread(epibed.tab.nome$gc_table)
 #'
 plotEpiread <- function(mat,
-                        plot_read_ave = TRUE,
+                        plot_read_avg = TRUE,
                         show_readnames = TRUE,
                         show_positions = TRUE,
                         show_all_points = FALSE,
@@ -304,10 +304,10 @@ plotEpiread <- function(mat,
     plt <- .epiClustPlot(mat.melt, meth_color, unmeth_color, na_color, ql_theme)
 
     # average methylation
-    if (plot_read_ave) {
-        plt_ave <- .plotAve(mat, meth_color, unmeth_color, ql_theme)
+    if (plot_read_avg) {
+        plt_avg <- .plotAvg(mat, meth_color, unmeth_color, ql_theme)
         return(list(epistate=plt,
-                    meth_ave=plt_ave))
+                    meth_avg=plt_avg))
     } else {
         return(plt)
     }
@@ -336,8 +336,8 @@ plotEpiread <- function(mat,
     return(mat.melt)
 }
 
-# helper to calculate ave methylation of a region and plot it
-.plotAve <- function(mat, meth_color, unmeth_color, theme) {
+# helper to calculate avg methylation of a region and plot it
+.plotAvg <- function(mat, meth_color, unmeth_color, theme) {
     # check if input is a matrix
     if (!is(mat, "matrix")) {
         stop("Input needs to be a matrix")
@@ -346,16 +346,16 @@ plotEpiread <- function(mat,
     mat[mat %in% c("M", "O")] <- 1
     mat[mat %in% c("U", "S", "A", "T", "G", "C")] <- 0
     mat <- apply(mat, 2, as.numeric)
-    mat.meth.ave <- data.frame(ave_meth = colMeans(mat, na.rm = TRUE))
-    mat.meth.ave$position <- rownames(mat.meth.ave)
-    mat.meth.ave$y <- "Average methylation status"
-    plt_ave <- ggplot(mat.meth.ave, aes(x = position, y = y)) +
-        geom_point(aes(fill = ave_meth), size=6, pch=21, color="black") +
+    mat.meth.avg <- data.frame(avg_meth = colMeans(mat, na.rm = TRUE))
+    mat.meth.avg$position <- rownames(mat.meth.avg)
+    mat.meth.avg$y <- "Average methylation status"
+    plt_avg <- ggplot(mat.meth.avg, aes(x = position, y = y)) +
+        geom_point(aes(fill = avg_meth), size=6, pch=21, color="black") +
         scale_fill_gradient(low = unmeth_color, high = meth_color, limits = c(0,1)) +
         guides(color = "legend") +
         theme
 
-    return(plt_ave)
+    return(plt_avg)
 }
 
 # helper to set the ql theme depending on readnames and position toggles
