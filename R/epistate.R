@@ -347,6 +347,7 @@ plotEpiread <- function(mat,
     mat[mat %in% c("U", "S", "A", "T", "G", "C")] <- 0
     mat <- apply(mat, 2, as.numeric)
     mat.meth.avg <- data.frame(avg_meth = colMeans(mat, na.rm = TRUE))
+    mat.meth.avg <- na.omit(mat.meth.avg) # remove empty rows that are somehow making it all the way here
     mat.meth.avg$position <- rownames(mat.meth.avg)
     mat.meth.avg$y <- "Average methylation status"
     plt_avg <- ggplot(mat.meth.avg, aes(x = position, y = y)) +
