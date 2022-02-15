@@ -9,7 +9,7 @@ multiscaleGroupAverage(means_dir, samples, config, which)
 \arguments{
 \item{means_dir}{List of length nSamples. Each element of means.list is itself a list of GRanges of length, nSteps}
 
-\item{samples}{character vector of samples to include. The must match the sample column from samples.tsv in the
+\item{samples}{character vector of samples to include. These samples must match the sample column from samples.tsv in the
 multiscale plot workflow}
 
 \item{config}{Config YAML from the multiscale plot workflow}
