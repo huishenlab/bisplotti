@@ -1,2 +1,2 @@
 library(testthat)
-test_check("bisplotly")
+test_check("bisplotti")
