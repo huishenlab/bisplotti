@@ -144,7 +144,7 @@ multiscaleMethylationPlot <- function(grl,
 #' Output of this function can be passed directly to multiscaleMethylationPlot
 #'
 #' @param means_dir List of length nSamples. Each element of means.list is itself a list of GRanges of length, nSteps
-#' @param samples character vector of samples to include. The must match the sample column from samples.tsv in the
+#' @param samples character vector of samples to include. These samples must match the sample column from samples.tsv in the
 #' multiscale plot workflow
 #' @param config Config YAML from the multiscale plot workflow
 #' @param which GRanges for rtracklayer::import
