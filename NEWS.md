@@ -19,3 +19,7 @@
 ## bisplotti 0.0.14
 
 * Fix a few bugs when creating epistate plots
+
+## bisplotti 0.0.15
+
+* Update vignette and other minor changes of that nature
