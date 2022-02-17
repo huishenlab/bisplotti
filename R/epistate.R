@@ -171,7 +171,7 @@ tabulateEpibed <- function(gr,
     filtrd_vec <- readlvl_vec[!readlvl_vec %in% exclude_bases]
 
     # short circuit if nothing is filtered
-    if (suppressWarnings(all(names(filtrd_vec) == names(readlvl_vec)))) {
+    if (suppressWarnings(all(names(filtrd_vec) == names(readlvl_vec), na.rm=TRUE))) {
         return(readlvl_vec)
     }
 
@@ -439,12 +439,12 @@ plotEpiread <- function(mat,
 #'
 #' @examples
 #'
-#' epibed.nome <- system.file("extdata", "hct116.nome.epiread.gz",
-#'                            package="biscuiteer")
-#' epibed.nome.gr <- readEpibed(epibed = epibed.nome, is.nome = TRUE,
-#'                              genome = "hg19", chr = "chr1")
-#' epibed.tab.nome <- tabulateEpibed(epibed.nome.gr)
-#' epistateCaller(epibed.tab.nome)
+#' #epibed.nome <- system.file("extdata", "hct116.nome.epiread.gz",
+#' #                           package="biscuiteer")
+#' #epibed.nome.gr <- readEpibed(epibed = epibed.nome, is.nome = TRUE,
+#' #                             genome = "hg19", chr = "chr1")
+#' #epibed.tab.nome <- tabulateEpibed(epibed.nome.gr)
+#' #epistateCaller(epibed.tab.nome)
 #'
 epistateCaller <- function(mat,
                            stringdist_method="hamming",
