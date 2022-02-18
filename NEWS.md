@@ -15,3 +15,11 @@
   * Automatic x- and y-axis scales to the plots (input dependent)
   * Allows for both RColorBrewer and viridis color palettes
   * Added function to find the average methylation across specified samples
+
+## bisplotti 0.0.14
+
+* Fix a few bugs when creating epistate plots
+
+## bisplotti 0.0.15
+
+* Update vignette and other minor changes of that nature
