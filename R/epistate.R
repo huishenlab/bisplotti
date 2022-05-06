@@ -257,9 +257,10 @@ tabulateEpibed <- function(gr,
 #' @param show_readnames Whether to show the read names (default: TRUE)
 #' @param show_positions Whether to show the genomic positions (default: TRUE)
 #' @param show_all_points Whether to show all points (i.e., empty reads, unknown, and filtered sites) (default: FALSE)
-#' @param meth_color What color should the methylated states be (default: 'black')
-#' @param unmeth_color What color should the unmethylated states be (default: 'white')
+#' @param meth_color What color should the methylated states be (default: '#FF2400')
+#' @param unmeth_color What color should the unmethylated states be (default: '#6495ED')
 #' @param na_color What color should the NA values be (default: 'grey')
+#' @param size What size the points should be drawn as (default: 6)
 #'
 #' @return An epiread ggplot object or list of ggplot objects if plot_read_avg is TRUE
 #'
@@ -282,9 +283,10 @@ plotEpiread <- function(mat,
                         show_readnames = TRUE,
                         show_positions = TRUE,
                         show_all_points = FALSE,
-                        unmeth_color = "white",
-                        meth_color = "black",
-                        na_color = "grey") {
+                        meth_color = "#FF2400",
+                        unmeth_color = "#6495ED",
+                        na_color = "grey",
+                        size = 6) {
 
     # check if input is a matrix
     if (is.list(mat) & is(mat[[1]], "matrix")) {
@@ -301,11 +303,11 @@ plotEpiread <- function(mat,
 
     # plot epiread
     ql_theme <- .set_ql_theme(show_readnames, show_positions)
-    plt <- .epiClustPlot(mat.melt, meth_color, unmeth_color, na_color, ql_theme)
+    plt <- .epiClustPlot(mat.melt, ql_theme, meth_color, unmeth_color, na_color, size)
 
     # average methylation
     if (plot_read_avg) {
-        plt_avg <- .plotAvg(mat, meth_color, unmeth_color, ql_theme)
+        plt_avg <- .plotAvg(mat, meth_color, unmeth_color, ql_theme, size)
         return(list(epistate=plt,
                     meth_avg=plt_avg))
     } else {
@@ -337,7 +339,7 @@ plotEpiread <- function(mat,
 }
 
 # helper to calculate avg methylation of a region and plot it
-.plotAvg <- function(mat, meth_color, unmeth_color, theme) {
+.plotAvg <- function(mat, meth_color, unmeth_color, theme, size) {
     # check if input is a matrix
     if (!is(mat, "matrix")) {
         stop("Input needs to be a matrix")
@@ -356,7 +358,7 @@ plotEpiread <- function(mat,
     mat.meth.avg$y <- ifelse(is.na(mat.meth.avg$avg_meth), "SNP status", "Average methylation status")
 
     plt_avg <- ggplot(mat.meth.avg, aes(x = position, y = y)) +
-        geom_point(aes(fill = avg_meth), size=6, pch=21, color="black", na.rm=TRUE) +
+        geom_point(aes(fill = avg_meth), size=size, pch=21, color="black", na.rm=TRUE) +
         scale_fill_gradient(low = unmeth_color, high = meth_color, limits = c(0,1)) +
         scale_y_discrete(limits = c("Average methylation status")) +
         guides(color = "legend") +
@@ -397,16 +399,19 @@ plotEpiread <- function(mat,
 }
 
 # helper to plot epireads given a matrix of read, pos, value
+# TODO: Remove default options as this is a non-exported function
+#       Will need to then define these values for the .epiClustPlot call in the epistateCaller function
 .epiClustPlot <- function(matplotdata,
-                          meth_color = "black",
-                          unmeth_color = "white",
+                          ql_theme,
+                          meth_color = "#FF2400",
+                          unmeth_color = "#6495ED",
                           na_color = "grey",
-                          ql_theme) {
+                          size = 6) {
 
     snp_list <- c("A", "T", "G", "C")
 
     plt <- ggplot(matplotdata, aes(x = Var2, y = Var1)) +
-        geom_point(aes(fill = value), size = 6, pch = 21, color = "black") +
+        geom_point(aes(fill = value), size=size, pch=21, color="black") +
         guides(color = "legend") +
         geom_label(data = subset(matplotdata, value %in% snp_list), aes(label = value)) +
         ql_theme
@@ -491,7 +496,7 @@ epistateCaller <- function(mat,
         matplotdata,
         function(m) {
             m$Var1 <- factor(m$Var1, levels = rev(get_taxa_name(tree)))
-            plt <- .epiClustPlot(m, "black", "white", "grey", ql_theme)
+            plt <- .epiClustPlot(m, ql_theme)
 
             clust_plot <- plot_grid(
                 tree, NULL, plt,
