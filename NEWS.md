@@ -23,3 +23,7 @@
 ## bisplotti 0.0.15
 
 * Update vignette and other minor changes of that nature
+
+## bisplotti 0.0.16
+
+* Update default colors in `plotEpibed()` and add option to change size of points in plots
