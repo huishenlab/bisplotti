@@ -10,9 +10,10 @@ plotEpiread(
   show_readnames = TRUE,
   show_positions = TRUE,
   show_all_points = FALSE,
-  unmeth_color = "white",
-  meth_color = "black",
-  na_color = "grey"
+  meth_color = "#FF2400",
+  unmeth_color = "#6495ED",
+  na_color = "grey",
+  size = 6
 )
 }
 \arguments{
@@ -26,11 +27,13 @@ plotEpiread(
 
 \item{show_all_points}{Whether to show all points (i.e., empty reads, unknown, and filtered sites) (default: FALSE)}
 
-\item{unmeth_color}{What color should the unmethylated states be (default: 'white')}
+\item{meth_color}{What color should the methylated states be (default: '#FF2400')}
 
-\item{meth_color}{What color should the methylated states be (default: 'black')}
+\item{unmeth_color}{What color should the unmethylated states be (default: '#6495ED')}
 
 \item{na_color}{What color should the NA values be (default: 'grey')}
+
+\item{size}{What size the points should be drawn as (default: 6)}
 }
 \value{
 An epiread ggplot object or list of ggplot objects if plot_read_avg is TRUE

@@ -13,6 +13,7 @@
 #' @export
 #'
 #' @import GenomicRanges
+#' @import stringr
 #'
 #' @examples
 #'
@@ -189,8 +190,8 @@ tabulateEpibed <- function(gr,
 .filterToRegion <- function(mat,
                             region = NULL) {
 
-    # do nothing if NULL region
-    if (is.null(region)) return(mat)
+    # return coord sorted matrix if region == NULL
+    if (is.null(region)) return(mat[,str_sort(colnames(mat), numeric=TRUE)])
 
     if (!is(region, "GRanges")) {
         # attempt to parse the standard chr#:start-end
@@ -228,7 +229,7 @@ tabulateEpibed <- function(gr,
     mat.sub <- mat[,colnames(mat) %in% pos_to_include]
 
     # order by chromosome position
-    mat.sub <- mat.sub[,order(colnames(mat.sub))]
+    mat.sub <- mat.sub[,str_sort(colnames(mat.sub), numeric=TRUE)]
 
     return(mat.sub)
 }
@@ -240,7 +241,7 @@ tabulateEpibed <- function(gr,
     mat.sub <- mat[rowMeans(is.na(mat)) < 1,,drop=FALSE]
 
     # order by chromosome position
-    mat.sub <- mat.sub[,order(colnames(mat.sub)),drop=FALSE]
+    mat.sub <- mat.sub[,str_sort(colnames(mat.sub), numeric=TRUE),drop=FALSE]
 
     return(mat.sub)
 }
@@ -353,6 +354,8 @@ plotEpiread <- function(mat,
     mat.meth.avg <- data.frame(avg_meth = colMeans(mat, na.rm = TRUE))
     mat.meth.avg <- na.omit(mat.meth.avg) # remove empty rows that are somehow making it all the way here
     mat.meth.avg$avg_meth <- ifelse(mat.meth.avg$avg_meth < 0, NA, mat.meth.avg$avg_meth)
+    # FIXME: The ordering is still not always correct for the average plots
+    mat.meth.avg <- mat.meth.avg[str_sort(rownames(mat.meth.avg), numeric=TRUE),]
 
     mat.meth.avg$position <- rownames(mat.meth.avg)
     mat.meth.avg$y <- ifelse(is.na(mat.meth.avg$avg_meth), "SNP status", "Average methylation status")
