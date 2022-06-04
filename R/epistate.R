@@ -354,8 +354,6 @@ plotEpiread <- function(mat,
     mat.meth.avg <- data.frame(avg_meth = colMeans(mat, na.rm = TRUE))
     mat.meth.avg <- na.omit(mat.meth.avg) # remove empty rows that are somehow making it all the way here
     mat.meth.avg$avg_meth <- ifelse(mat.meth.avg$avg_meth < 0, NA, mat.meth.avg$avg_meth)
-    # FIXME: The ordering is still not always correct for the average plots
-    mat.meth.avg <- mat.meth.avg[str_sort(rownames(mat.meth.avg), numeric=TRUE),]
 
     mat.meth.avg$position <- rownames(mat.meth.avg)
     mat.meth.avg$y <- ifelse(is.na(mat.meth.avg$avg_meth), "SNP status", "Average methylation status")
@@ -363,6 +361,7 @@ plotEpiread <- function(mat,
     plt_avg <- ggplot(mat.meth.avg, aes(x = position, y = y)) +
         geom_point(aes(fill = avg_meth), size=size, pch=21, color="black", na.rm=TRUE) +
         scale_fill_gradient(low = unmeth_color, high = meth_color, limits = c(0,1)) +
+        scale_x_discrete(name ="", limits=rownames(mat.meth.avg)) +
         scale_y_discrete(limits = c("Average methylation status")) +
         guides(color = "legend") +
         theme
