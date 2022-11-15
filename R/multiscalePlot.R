@@ -97,7 +97,6 @@ multiscaleMethylationPlot <- function(grl,
     # Add y-axis ticks (if config is provided)
     if (!is.null(config)) {
         steps <- .getMultiscaleSteps(config) # steps
-        print(steps)
 
         g <- g + 
             scale_y_discrete(breaks = unique(round(steps,0)), name="",
