@@ -25,7 +25,8 @@ Depends:
     biscuiteer,
     biscuiteerData,
     bsseq,
-    ggplot2
+    ggplot2,
+    RColorBrewer
 Imports:
 Suggests:
     covr,

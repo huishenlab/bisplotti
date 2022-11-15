@@ -8,12 +8,14 @@
 #' @param genome Genome data is from, currently only works for hg19, hg38, mm9, and mm10 (default: "hg38")
 #' @param chr Pull out a single chromosome for bins, use all chromosomes if NULL (default: NULL)
 #' @param palette RColorBrewer palette to create plot with (default: "PuBu")
+#' @param make_log Make z-axis for density be log10 (default: FALSE)
 #'
 #' @return a ggplot2 object of the density plot
 #'
 #' @import GenomicRanges
 #' @import biscuiteer
 #' @import ggplot2
+#' @importFrom RColorBrewer brewer.pal
 #' @importFrom cowplot theme_cowplot
 #'
 #' @export
@@ -38,7 +40,8 @@ meth2DDensity <- function(betas,
                           which = 10000,
                           genome = "hg38",
                           chr = NULL,
-                          palette = "PuBu") {
+                          palette = "PuBu",
+                          make_log = FALSE) {
 
     # Check inputs are in correct form
     if (!is(betas, "BSseq") & !is(betas, "matrix")) stop("betas needs to be a BSseq or a matrix object.")
@@ -47,6 +50,7 @@ meth2DDensity <- function(betas,
     if (!(genome %in% c("hg19", "hg38", "mm10")) & !is(which, "GRanges")) {
         stop("genome unrecognized. Please provide a GRanges with your bins.")
     }
+    if (!is.logical(make_log)) stop("make_log must be TRUE or FALSE")
 
     if (is(which, "numeric")) {
         gen.sl <- getSeqLengths(genome=genome, chr=chr)
@@ -92,17 +96,27 @@ meth2DDensity <- function(betas,
     s1 <- colnames(df)[idx1]
     s2 <- colnames(df)[idx2]
 
-    g <- ggplot(mapping=aes(x=df[[s1]], y=df[[s2]]) ) +
-    stat_density_2d(aes(fill = ..density..), geom = "raster", contour = FALSE, na.rm=TRUE) +
-    scale_fill_distiller(palette = palette, direction = -1) +
-    scale_x_continuous(breaks=seq(0, 1, 0.2), limits = c(0, 1)) +
-    scale_y_continuous(breaks=seq(0, 1, 0.2), limits = c(0, 1)) +
-    xlab(s1) +
-    ylab(s2) +
-    cowplot::theme_cowplot() +
-    theme(
-          legend.position="none"
-          )
+    g <- ggplot(mapping=aes(x=df[[s1]], y=df[[s2]]) )
+
+    if (make_log) {
+        # Find minimum color to set as NA value for log scale
+        cols <- brewer.pal(n = 8, name = palette)
+
+        g <- g +
+            stat_density_2d(aes(fill = log10(..density..)), geom = "raster", contour = FALSE, na.rm=TRUE) +
+            scale_fill_distiller(palette = palette, direction = -1, limits=c(-3, NA), na.value = cols[length(cols)])
+    } else {
+        g <- g +
+            stat_density_2d(aes(fill = ..density..), geom = "raster", contour = FALSE, na.rm=TRUE) +
+            scale_fill_distiller(palette = palette, direction = -1)
+    }
+
+    g <- g +
+        scale_x_continuous(breaks=seq(0, 1, 0.2), limits = c(0, 1)) +
+        scale_y_continuous(breaks=seq(0, 1, 0.2), limits = c(0, 1)) +
+        xlab(s1) +
+        ylab(s2) +
+        cowplot::theme_cowplot()
 
     return(g)
 }

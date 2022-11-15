@@ -11,7 +11,8 @@ meth2DDensity(
   which = 10000,
   genome = "hg38",
   chr = NULL,
-  palette = "PuBu"
+  palette = "PuBu",
+  make_log = FALSE
 )
 }
 \arguments{
@@ -29,6 +30,8 @@ GRanges. If GRanges, ignores genome and chr (default: 10000)}
 \item{chr}{Pull out a single chromosome for bins, use all chromosomes if NULL (default: NULL)}
 
 \item{palette}{RColorBrewer palette to create plot with (default: "PuBu")}
+
+\item{make_log}{Make z-axis for density be log10 (default: FALSE)}
 }
 \value{
 a ggplot2 object of the density plot
