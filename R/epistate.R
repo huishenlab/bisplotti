@@ -6,7 +6,7 @@
 #' @param gr The epibed GRanges object from readEpibed()
 #' @param region Either a GRanges of regions to subset to or explicit region (e.g., chr6:1555-1900)
 #' @param include_empty_reads Whether to include reads that contain no methylated (or SNP) sites (default: FALSE)
-#' @param include_snps Whether to include SNPs or not (default: FALSE)
+#' @param include_snps Whether to include SNPs or not, only matters for epiBEDs from BISCUIT v1.0 or 1.1 (default: TRUE)
 #'
 #' @return A matrix or list of matrices
 #'
@@ -19,74 +19,121 @@
 #'
 #' epibed.nome <- system.file("extdata", "hct116.nome.epiread.gz",
 #'                            package="biscuiteer")
-#' epibed.nome.gr <- readEpibed(epibed = epibed.nome, is.nome = TRUE,
+#' epibed.nome.gr <- readEpibed(epibed = epibed.nome,
 #'                              genome = "hg19", chr = "chr1")
 #' epibed.tab.nome <- tabulateEpibed(epibed.nome.gr)
 #'
 tabulateEpibed <- function(gr,
                            region = NULL,
                            include_empty_reads = FALSE,
-                           include_snps = FALSE) {
+                           include_snps = TRUE) {
 
     # check if a GRanges
     stopifnot(is(gr, "GRanges"))
 
-    # autodetect if it's a NOMe epibed
-    is.nome = FALSE
-    if ("GC_decode" %in% names(mcols(gr))) is.nome = TRUE
-
     # tabulate strings
-    # char filtered = 'F';
-    # char ignored  = 'x';
-    # char deletion = 'D';
-    # char softclip = 'P';
-    # char methylat = 'M';
-    # char unmethyl = 'U';
-    # char open_acc = 'O';
-    # char shut_acc = 'S';
+    #const char skip_epi = '-';
+    #const char skip_ins = 'i';
+    #const char skip_del = 'd';
+    #const char filtered = 'F';
+    #const char ignored  = 'x';
+    #const char deletion = 'D';
+    #const char softclip = 'P';
+    #const char methylat = 'M';
+    #const char unmethyl = 'U';
+    #const char open_acc = 'O';
+    #const char shut_acc = 'S';
+    #const char ambig_ga = 'R';
+    #const char ambig_ct = 'Y';
 
     # we need to build up a table of CGH and GCH
-    cg_table <- .tabulateRLE(gr, include_snps = include_snps, cg = TRUE)
-    cg_table <- .filterToRegion(cg_table, region = region)
-
-    if (!include_empty_reads) {
-        cg_table <- .filterEmptyReads(cg_table)
+    if (!all(is.na(gr$CG_decode))) {
+        cg_table <- .tabulateRLE(gr, col = "CG_decode", include_snps = include_snps, type = "cg")
+        cg_table <- .filterToRegion(cg_table, region = region)
+    } else {
+        cg_table <- matrix(data = NA, nrow = length(gr$readname), ncol = 1)
+        rownames(cg_table) <- gr$readname
+        colnames(cg_table) <- "cg_missing"
     }
-    if (is.nome) {
-        gc_table <- .tabulateRLE(gr, include_snps = include_snps, cg = FALSE)
+
+    if (!all(is.na(gr$GC_decode))) {
+        gc_table <- .tabulateRLE(gr, col = "GC_decode", include_snps = include_snps, type = "gc")
         gc_table <- .filterToRegion(gc_table, region = region)
-
-        if (!include_empty_reads) {
-            gc_table <- .filterEmptyReads(gc_table)
-        }
-
-        # Remove any rows that can't be found in both tables
-        # This ensures there is methylation information in both the CpG and GpC context when plotting
-        cg_table <- cg_table[rownames(cg_table) %in% rownames(gc_table), ]
-        gc_table <- gc_table[rownames(gc_table) %in% rownames(cg_table), ]
-
-        reorder_idx <- match(rownames(gc_table), rownames(cg_table))
-        gc_table <- gc_table[reorder_idx, ]
-
-        return(list(cg_table = cg_table,
-                    gc_table = gc_table))
+    } else {
+        gc_table <- matrix(data = NA, nrow = length(gr$readname), ncol = 1)
+        rownames(gc_table) <- gr$readname
+        colnames(gc_table) <- "gc_missing"
     }
 
-    return(cg_table)
+    if (!all(is.na(gr$VAR_decode))) {
+        vr_table <- .tabulateRLE(gr, col = "VAR_decode", include_snps = include_snps, type = "variant")
+        vr_table <- .filterToRegion(vr_table, region = region)
+    } else {
+        vr_table <- matrix(data = NA, nrow = length(gr$readname), ncol = 1)
+        rownames(vr_table) <- gr$readname
+        colnames(vr_table) <- "variant_missing"
+    }
+
+    # Match row order up to the CG table
+    reorder_idx_gc <- match(rownames(gc_table), rownames(cg_table))
+    reorder_idx_vr <- match(rownames(vr_table), rownames(cg_table))
+    gc_table <- gc_table[reorder_idx_gc, , drop = FALSE]
+    vr_table <- vr_table[reorder_idx_vr, , drop = FALSE]
+
+    # Remove any rows that can't be found in all tables
+    if (!include_empty_reads) {
+        drop_these_rows <- .rowsToDrop(cg_table, gc_table, vr_table)
+
+        if (!is.null(drop_these_rows)) {
+            cg_table <- cg_table[!(rownames(cg_table) %in% drop_these_rows), , drop = FALSE]
+            gc_table <- gc_table[!(rownames(gc_table) %in% drop_these_rows), , drop = FALSE]
+            vr_table <- vr_table[!(rownames(vr_table) %in% drop_these_rows), , drop = FALSE]
+        }
+    }
+
+    return (list(cg_table=cg_table,
+                 gc_table=gc_table,
+                 vr_table=vr_table))
 }
 
-# helper to tabulate to a CGH or GCH table
-.tabulateRLE <- function(gr, include_snps, cg = TRUE) {
+# helper
+# assumes inputs have the same sorted order
+.rowsToDrop <- function(cg, gc, vr) {
+    if (nrow(cg) != nrow(gc) && nrow(cg) != nrow(vr)) {
+        stop("Error: Number of reads is unequal across CG, GC, and VARIANT tables")
+    }
+
+    drop <- c()
+    for (row in nrow(cg)) {
+        b_cg <- sum(is.na(cg[row,])) == ncol(cg)
+        b_gc <- sum(is.na(gc[row,])) == ncol(gc)
+        b_vr <- sum(is.na(vr[row,])) == ncol(vr)
+
+        if (b_cg && b_gc && b_vr) {
+            drop <- c(drop, row)
+        }
+    }
+
+    drop
+}
+
+# helper
+.tabulateRLE <- function(gr, col, include_snps, type=c("cg", "gc", "variant")) {
+    type = match.arg(type)
+
     # there can be duplicate read names if not collapsed to fragment
-    # this can occur if reads 1 and 2 originate from the "same" strbnd
+    # this can occur if reads 1 and 2 originate from the "same" strand
     # make read names unique ahead of time...
     gr$readname <- make.unique(gr$readname)
 
-    keep_cg <- c("M", "U")
-    keep_gc <- c("O", "S")
-    if (include_snps) {
-        keep_cg <- c(keep_cg, c("A", "T", "G", "C"))
-        keep_gc <- c(keep_gc, c("A", "T", "G", "C"))
+    keep <- switch(
+        type,
+        "cg" = c("M", "U"),
+        "gc" = c("O", "S"),
+        "variant" = c("A", "T", "G", "C", "R", "Y")
+    )
+    if (include_snps && type != "variant") {
+        keep <- c(keep, c("A", "T", "G", "C"))
     }
 
     # iterate through each read and decompose to position
@@ -98,72 +145,60 @@ tabulateEpibed <- function(gr,
                 sub_gr <- gr[x]
 
                 # generate a per base array
-                pos_vec <- seq(start(sub_gr), end(sub_gr))
-                if (cg) {
-                    rle_vec <- unlist(strsplit(sub_gr$CG_decode, split = ""))
-                } else {
-                    rle_vec <- unlist(strsplit(sub_gr$GC_decode, split = ""))
-                }
-                names(rle_vec) <- pos_vec
+                rle_vec <- unlist(strsplit(mcols(sub_gr)[, col], split = ""))
+                names(rle_vec) <- seq(start(sub_gr), end(sub_gr))
 
                 # filter out insertions
                 rle_vec <- .filterInsertions(rle_vec)
 
-                # keep the C status
-                if (cg) {
-                    rle_vec_c <- rle_vec[rle_vec %in% keep_cg]
-                } else {
-                    rle_vec_c <- rle_vec[rle_vec %in% keep_gc]
-                }
+                # keep values we want
+                rle_vec_c <- rle_vec[rle_vec %in% keep]
+
                 if (!length(rle_vec_c)) {
                     rle_c_df <- data.frame(chr = seqnames(sub_gr),
-                                      start = start(sub_gr),
-                                      end = start(sub_gr),
-                                      meth_status = NA,
-                                      read_id = sub_gr$readname)
-                    return(makeGRangesFromDataFrame(rle_c_df,
-                                                    keep.extra.columns = TRUE))
+                                           start = start(sub_gr),
+                                           end = start(sub_gr),
+                                           base_status = NA,
+                                           read_id = sub_gr$readname)
+                    return(makeGRangesFromDataFrame(rle_c_df, keep.extra.columns = TRUE))
                 }
 
                 # turn back into GRanges
                 rle_c_df <- data.frame(chr = seqnames(sub_gr),
                                        start = names(rle_vec_c),
                                        end = names(rle_vec_c),
-                                       meth_status = rle_vec_c,
+                                       base_status = rle_vec_c,
                                        read_id = sub_gr$readname)
 
-                return(makeGRangesFromDataFrame(rle_c_df,
-                                                keep.extra.columns = TRUE))
+                return(makeGRangesFromDataFrame(rle_c_df, keep.extra.columns = TRUE))
             }
         )
     )
 
-    # find the dimension of collapsed Cs to fill in the matrix
+    # find the dimension of collapsed values to fill in the matrix
     readlvl_gr_len <- length(unique(readlvl_gr))
 
     # make an empty matrix to fill in
-    readlvl_emp_mat <- matrix(data = NA,
-                              nrow = length(unique(readlvl_gr$read_id)),
-                              ncol = readlvl_gr_len)
+    readlvl_emp_mat <- matrix(data = NA, nrow = length(unique(readlvl_gr$read_id)), ncol = readlvl_gr_len)
     rownames(readlvl_emp_mat) <- unique(readlvl_gr$read_id)
     colnames(readlvl_emp_mat) <- as.character(granges(unique(readlvl_gr)))
 
     # go by read and extract out methylation states
-    readlvl_gr_mat <- as.matrix(cbind(as.character(granges(readlvl_gr)),
-                                      readlvl_gr$read_id,
-                                      readlvl_gr$meth_status))
+    readlvl_gr_mat <- as.matrix(cbind(as.character(granges(readlvl_gr)), readlvl_gr$read_id, readlvl_gr$base_status))
     readlvl_emp_mat[readlvl_gr_mat[,c(2,1)]] <- readlvl_gr_mat[,3]
+
+    readlvl_emp_mat <- readlvl_emp_mat[,colSums(is.na(readlvl_emp_mat))<nrow(readlvl_emp_mat)]
 
     return(readlvl_emp_mat)
 }
 
-# helper to filter out indels and softclips
+# helper to filter out insertions
 # this is needed to reset coordinates properly
 .filterInsertions <- function(readlvl_vec) {
     # the input here is a named vec of positions
-    # we need to pull everything out that is not a lower case a,c,g,t
+    # we need to pull everything out that is not a lower case a,c,g,t,i
     # we can correct for new starts if someone has not filtered the first few bases
-    exclude_bases <- c("a", "c", "g", "t")
+    exclude_bases <- c("a", "c", "g", "t", "i")
 
     # note: if a SNP has a base, it will be upper case
     # case sensitivity matters here
@@ -180,8 +215,7 @@ tabulateEpibed <- function(gr,
     if (strt != names(filtrd_vec)[1]) {
         strt <- names(filtrd_vec)[1]
     }
-    names(filtrd_vec) <- seq(as.numeric(strt),
-                             c(as.numeric(strt)+length(filtrd_vec)-1))
+    names(filtrd_vec) <- seq(as.numeric(strt), c(as.numeric(strt)+length(filtrd_vec)-1))
 
     return(filtrd_vec)
 }
@@ -234,18 +268,6 @@ tabulateEpibed <- function(gr,
     return(mat.sub)
 }
 
-# helper to remove empty reads (i.e., reads with all NAs)
-# input is a matrix after tabulateEpibed is done
-.filterEmptyReads <- function(mat) {
-    # filter reads
-    mat.sub <- mat[rowMeans(is.na(mat)) < 1,,drop=FALSE]
-
-    # order by chromosome position
-    mat.sub <- mat.sub[,str_sort(colnames(mat.sub), numeric=TRUE),drop=FALSE]
-
-    return(mat.sub)
-}
-
 #' Plot the results of tabulateEpibed() as a quasi-lollipop plot.
 #'
 #' NOTE: If you run tabulateEpibed() in NOMe mode with include_empty_reads = TRUE,
@@ -292,7 +314,7 @@ plotEpiread <- function(mat,
     # check if input is a matrix
     if (is.list(mat) & is(mat[[1]], "matrix")) {
         message("Input given is likely the output of tabulateEpibed() in NOMe mode.")
-        stop("Please select either $cg_table or $gc_table to plot.")
+        stop("Please select either $cg_table, $gc_table, or $vr_table to plot.")
     }
     if (!is.list(mat) & !is(mat, "matrix")) {
         stop("Input needs to be a matrix generated by tabulateEpibed()")
@@ -307,6 +329,7 @@ plotEpiread <- function(mat,
     plt <- .epiClustPlot(mat.melt, ql_theme, meth_color, unmeth_color, na_color, size)
 
     # average methylation
+    # FIXME: If having SNP plot separate, find way to avoid making average plot for SNPs
     if (plot_read_avg) {
         plt_avg <- .plotAvg(mat, meth_color, unmeth_color, ql_theme, size)
         return(list(epistate=plt,
@@ -321,11 +344,13 @@ plotEpiread <- function(mat,
     # auto-detect input type
     is.cg = FALSE
     is.gc = FALSE
+    is.vr = FALSE
     if(any(mat %in% c("M", "U"))) is.cg = TRUE
     if(any(mat %in% c("S", "O"))) is.gc = TRUE
+    if(any(mat %in% c("A", "C", "T", "G", "R", "Y"))) is.vr = TRUE
 
     # break if both are FALSE
-    if (isFALSE(is.cg) & isFALSE(is.gc)) {
+    if (isFALSE(is.cg) & isFALSE(is.gc) & isFALSE(is.vr)) {
         message("Don't know what to do with input.")
         stop("Please run tabulateEpibed() first to produce input for this function.")
     }
@@ -410,7 +435,7 @@ plotEpiread <- function(mat,
                           na_color = "grey",
                           size = 6) {
 
-    snp_list <- c("A", "T", "G", "C")
+    snp_list <- c("A", "T", "G", "C", "R", "Y")
 
     plt <- ggplot(matplotdata, aes(x = Var2, y = Var1)) +
         geom_point(aes(fill = value), size=size, pch=21, color="black") +
