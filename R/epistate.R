@@ -158,6 +158,7 @@ tabulateEpibed <- function(gr,
                     rle_c_df <- data.frame(chr = seqnames(sub_gr),
                                            start = start(sub_gr),
                                            end = start(sub_gr),
+                                           strand = "*",
                                            base_status = NA,
                                            read_id = sub_gr$readname)
                     return(makeGRangesFromDataFrame(rle_c_df, keep.extra.columns = TRUE))
@@ -167,9 +168,9 @@ tabulateEpibed <- function(gr,
                 rle_c_df <- data.frame(chr = seqnames(sub_gr),
                                        start = names(rle_vec_c),
                                        end = names(rle_vec_c),
+                                       strand = sub_gr$bsstrand,
                                        base_status = rle_vec_c,
                                        read_id = sub_gr$readname)
-
                 return(makeGRangesFromDataFrame(rle_c_df, keep.extra.columns = TRUE))
             }
         )
@@ -260,7 +261,7 @@ tabulateEpibed <- function(gr,
     }
 
     # subset to positions to include
-    mat.sub <- mat[,colnames(mat) %in% pos_to_include]
+    mat.sub <- mat[,substr(colnames(mat), 1, nchar(colnames(mat))-2) %in% pos_to_include]
 
     # order by chromosome position
     mat.sub <- mat.sub[,str_sort(colnames(mat.sub), numeric=TRUE)]
