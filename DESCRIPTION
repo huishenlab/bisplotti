@@ -8,7 +8,7 @@ Description: Bisplotti is primarily a plotting focused package for bisulfite and
 		  of plots that you, as a user, would like to see or have functions to 
 		  generate the plots you use on a regular basis, please consider opening
 		  either a pull request or an issue.
-Version: 0.0.17
+Version: 0.0.18
 Date: 2022-06-04
 Authors@R: c(person("Hui", "Shen", role = c("aut")),
              person("Wanding", "Zhou", role = c("aut")),
@@ -36,6 +36,6 @@ Suggests:
     Rang,
     Roxygen2,
 Encoding: UTF-8
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.3
 Roxygen: list(markdown = TRUE)
 VignetteBuilder: knitr

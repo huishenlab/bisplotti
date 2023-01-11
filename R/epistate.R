@@ -7,6 +7,7 @@
 #' @param region Either a GRanges of regions to subset to or explicit region (e.g., chr6:1555-1900)
 #' @param include_empty_reads Whether to include reads that contain no methylated (or SNP) sites (default: FALSE)
 #' @param include_snps Whether to include SNPs or not, only matters for epiBEDs from BISCUIT v1.0 or 1.1 (default: TRUE)
+#' @param merge_strands Whether to merge Cs or SNPs on opposite bisulfite strands (default: TRUE)
 #'
 #' @return A matrix or list of matrices
 #'
@@ -26,7 +27,8 @@
 tabulateEpibed <- function(gr,
                            region = NULL,
                            include_empty_reads = FALSE,
-                           include_snps = TRUE) {
+                           include_snps = TRUE,
+                           merge_strands = TRUE) {
 
     # check if a GRanges
     stopifnot(is(gr, "GRanges"))
@@ -50,6 +52,7 @@ tabulateEpibed <- function(gr,
     if (!all(is.na(gr$CG_decode))) {
         cg_table <- .tabulateRLE(gr, col = "CG_decode", include_snps = include_snps, type = "cg")
         cg_table <- .filterToRegion(cg_table, region = region)
+        if (merge_strands) { cg_table <- .mergeColumns(cg_table, type="cg") }
     } else {
         cg_table <- matrix(data = NA, nrow = length(gr$readname), ncol = 1)
         rownames(cg_table) <- gr$readname
@@ -59,6 +62,7 @@ tabulateEpibed <- function(gr,
     if (!all(is.na(gr$GC_decode))) {
         gc_table <- .tabulateRLE(gr, col = "GC_decode", include_snps = include_snps, type = "gc")
         gc_table <- .filterToRegion(gc_table, region = region)
+        if (merge_strands) { gc_table <- .mergeColumns(gc_table, type="gc") }
     } else {
         gc_table <- matrix(data = NA, nrow = length(gr$readname), ncol = 1)
         rownames(gc_table) <- gr$readname
@@ -68,6 +72,7 @@ tabulateEpibed <- function(gr,
     if (!all(is.na(gr$VAR_decode))) {
         vr_table <- .tabulateRLE(gr, col = "VAR_decode", include_snps = include_snps, type = "variant")
         vr_table <- .filterToRegion(vr_table, region = region)
+        if (merge_strands) { vr_table <- .mergeColumns(vr_table, type="snp") }
     } else {
         vr_table <- matrix(data = NA, nrow = length(gr$readname), ncol = 1)
         rownames(vr_table) <- gr$readname
@@ -94,6 +99,218 @@ tabulateEpibed <- function(gr,
     return (list(cg_table=cg_table,
                  gc_table=gc_table,
                  vr_table=vr_table))
+}
+
+# helper
+.mergeColumns <- function(mat, type=c("cg", "gc", "snp")) {
+    type <- match.arg(type)
+
+    prev <- NULL
+    to_drop <- c()
+    if (type == "cg") {
+        for (i in seq_len(length(colnames(mat)))) {
+            cname <- colnames(mat)[i]
+            if (cname == "cg_missing") {
+                return(mat)
+            }
+            len <- nchar(cname)
+            if (is.null(prev)) {
+                last_char <- substr(cname, len, len)
+                if (last_char == "+") {
+                    prev <- cname
+                    next
+                } else if (last_char == "*") {
+                    cat("* in a CG found\n")
+                    break
+                } else {
+                    pieces <- .parseName(cname)
+                    new_cname <- paste(pieces$chr, pieces$loc-1, "+", sep=":")
+                    colnames(mat)[i] <- new_cname
+                    next
+                }
+            }
+
+            ppieces <- .parseName(prev)
+            cpieces <- .parseName(cname)
+
+            if (ppieces$loc+1 == cpieces$loc) {
+                for (rname in rownames(mat)) {
+                    if (!is.na(mat[rname, prev]) && !is.na(mat[rname, cname])) {
+                        message("Malformed file: Found values defined in both OT and OB strands!")
+                        stop("Read name: ", rname, ", location: ", prev, ", ", cname)
+                    } else if (is.na(mat[rname, prev]) && !is.na(mat[rname, cname])) {
+                        mat[rname, prev] <- mat[rname, cname]
+                        mat[rname, cname] <- NA
+                    } else {
+                        # Either both are NAs or "-" strand is, but not "+" strand
+                        next
+                    }
+                }
+
+                if (all(is.na(mat[cname]))) {
+                    to_drop <- c(to_drop, cname)
+                }
+            } else {
+                last_char <- substr(cname, len, len)
+                if (last_char == "+") {
+                    prev <- cname
+                    next
+                } else {
+                    new_cname <- paste(cpieces$chr, cpieces$loc-1, "+", sep=":")
+                    colnames(mat)[i] <- new_cname
+                }
+            }
+
+            prev <- NULL
+        }
+
+        mat <- mat[,!(colnames(mat) %in% to_drop)]
+
+        for (i in seq_len(length(colnames(mat)))) {
+            pieces <- .parseName(colnames(mat)[i])
+            colnames(mat)[i] <- paste0(pieces$chr, ":", pieces$loc, "-", pieces$loc+1)
+        }
+    } else if (type == "gc") {
+        for (i in seq_len(length(colnames(mat)))) {
+            cname <- colnames(mat)[i]
+            if (cname == "gc_missing") {
+                return(mat)
+            }
+            len <- nchar(cname)
+            if (is.null(prev)) {
+                last_char <- substr(cname, len, len)
+                if (last_char == "-") {
+                    prev <- cname
+                    next
+                } else if (last_char == "*") {
+                    cat("* in a GC found\n")
+                    break
+                } else {
+                    pieces <- .parseName(cname)
+                    new_cname <- paste(pieces$chr, pieces$loc-1, "-", sep=":")
+                    colnames(mat)[i] <- new_cname
+                    next
+                }
+            }
+
+            ppieces <- .parseName(prev)
+            cpieces <- .parseName(cname)
+
+            if (ppieces$loc+1 == cpieces$loc) {
+                for (rname in rownames(mat)) {
+                    if (!is.na(mat[rname, prev]) && !is.na(mat[rname, cname])) {
+                        message("Malformed file: Found values defined in both OT and OB strands!")
+                        stop("Read name: ", rname, ", location: ", prev, ", ", cname)
+                    } else if (is.na(mat[rname, prev]) && !is.na(mat[rname, cname])) {
+                        mat[rname, prev] <- mat[rname, cname]
+                        mat[rname, cname] <- NA
+                    } else {
+                        # Either both are NAs or "-" strand is, but not "+" strand
+                        next
+                    }
+                }
+
+                if (all(is.na(mat[cname]))) {
+                    to_drop <- c(to_drop, cname)
+                }
+            } else {
+                last_char <- substr(cname, len, len)
+                if (last_char == "-") {
+                    prev <- cname
+                    next
+                } else {
+                    new_cname <- paste(cpieces$chr, cpieces$loc-1, "-", sep=":")
+                    colnames(mat)[i] <- new_cname
+                }
+            }
+
+            prev <- NULL
+        }
+
+        mat <- mat[,!(colnames(mat) %in% to_drop)]
+
+        for (i in seq_len(length(colnames(mat)))) {
+            pieces <- .parseName(colnames(mat)[i])
+            colnames(mat)[i] <- paste0(pieces$chr, ":", pieces$loc, "-", pieces$loc+1)
+        }
+    } else {
+        for (i in seq_len(length(colnames(mat)))) {
+            cname <- colnames(mat)[i]
+            if (cname == "vr_missing") {
+                return(mat)
+            }
+            len <- nchar(cname)
+            if (is.null(prev)) {
+                last_char <- substr(cname, len, len)
+                if (last_char == "-") {
+                    prev <- cname
+                    next
+                } else if (last_char == "*") {
+                    cat("* in a SNP found\n")
+                    break
+                } else {
+                    pieces <- .parseName(cname)
+                    new_cname <- paste(pieces$chr, pieces$loc, "-", sep=":")
+                    colnames(mat)[i] <- new_cname
+                    next
+                }
+            }
+
+            ppieces <- .parseName(prev)
+            cpieces <- .parseName(cname)
+
+            if (ppieces$loc == cpieces$loc) {
+                # cat("Found a good one!", prev, " ", cname, "\n")
+                for (rname in rownames(mat)) {
+                    if (!is.na(mat[rname, prev]) && !is.na(mat[rname, cname])) {
+                        message("Malformed file: Found values defined in both OT and OB strands!")
+                        stop("Read name: ", rname, ", location: ", prev, ", ", cname)
+                    } else if (is.na(mat[rname, prev]) && !is.na(mat[rname, cname])) {
+                        mat[rname, prev] <- mat[rname, cname]
+                        mat[rname, cname] <- NA
+                    } else {
+                        # Either both are NAs or "-" strand is, but not "+" strand
+                        next
+                    }
+                }
+
+                if (all(is.na(mat[cname]))) {
+                    to_drop <- c(to_drop, cname)
+                }
+            } else {
+                last_char <- substr(cname, len, len)
+                if (last_char == "-") {
+                    prev <- cname
+                    next
+                } else {
+                    new_cname <- paste(cpieces$chr, cpieces$loc, "-", sep=":")
+                    colnames(mat)[i] <- new_cname
+                }
+            }
+
+            prev <- NULL
+        }
+
+        mat <- mat[,!(colnames(mat) %in% to_drop)]
+
+        for (i in seq_len(length(colnames(mat)))) {
+            pieces <- .parseName(colnames(mat)[i])
+            colnames(mat)[i] <- paste0(pieces$chr, ":", pieces$loc, "-", pieces$loc)
+        }
+    }
+
+    mat
+}
+
+# helper
+.parseName <- function(cname) {
+    pieces <- strsplit(cname, ":")[[1]]
+
+    list(
+        chr = pieces[1],
+        loc = as.integer(pieces[2]),
+        stn = pieces[3]
+    )
 }
 
 # helper

@@ -8,7 +8,8 @@ tabulateEpibed(
   gr,
   region = NULL,
   include_empty_reads = FALSE,
-  include_snps = FALSE
+  include_snps = TRUE,
+  merge_strands = TRUE
 )
 }
 \arguments{
@@ -18,7 +19,9 @@ tabulateEpibed(
 
 \item{include_empty_reads}{Whether to include reads that contain no methylated (or SNP) sites (default: FALSE)}
 
-\item{include_snps}{Whether to include SNPs or not (default: FALSE)}
+\item{include_snps}{Whether to include SNPs or not, only matters for epiBEDs from BISCUIT v1.0 or 1.1 (default: TRUE)}
+
+\item{merge_strands}{Whether to merge Cs or SNPs on opposite bisulfite strands (default: TRUE)}
 }
 \value{
 A matrix or list of matrices
@@ -31,7 +34,7 @@ It will auto-detect whether this a BS-seq or a NOMe-seq run and tabulate accordi
 
 epibed.nome <- system.file("extdata", "hct116.nome.epiread.gz",
                            package="biscuiteer")
-epibed.nome.gr <- readEpibed(epibed = epibed.nome, is.nome = TRUE,
+epibed.nome.gr <- readEpibed(epibed = epibed.nome,
                              genome = "hg19", chr = "chr1")
 epibed.tab.nome <- tabulateEpibed(epibed.nome.gr)
 
