@@ -19,7 +19,7 @@
 #'
 #' @examples
 #'
-#' epibed.nome <- system.file("extdata", "hct116.nome.epiread.gz",
+#' epibed.nome <- system.file("extdata", "hct116.nome.epibed.gz",
 #'                            package="biscuiteer")
 #' epibed.nome.gr <- readEpibed(epibed = epibed.nome,
 #'                              genome = "hg19", chr = "chr1")
