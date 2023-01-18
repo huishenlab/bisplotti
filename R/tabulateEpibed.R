@@ -115,8 +115,8 @@ tabulateEpibed <- function(gr,
 # lname - name of column whose entries will be last in paste
 .mergeWithNAs <- function(mat, fname, lname) {
     tmp <- paste0(
-        replace(mat[, fname], is.na(mat[, fname]), ""),
-        replace(mat[, lname], is.na(mat[, lname]), "")
+        replace(mat[, fname], is.na(mat[, fname]), "N"),
+        replace(mat[, lname], is.na(mat[, lname]), "N")
     )
 
     tmp
@@ -140,7 +140,7 @@ tabulateEpibed <- function(gr,
 
                 if ((nreg[["end"]] - nreg[["start"]] == 0) && (creg[["end"]] == nreg[["start"]])) {
                     tmp <- .mergeWithNAs(comb, cnam, nnam)
-                    comb[, cnam] <- replace(tmp, tmp == "", NA)
+                    comb[, cnam] <- replace(tmp, tmp == "NN", NA)
                     comb[, nnam] <- NA
                     to_drop <- c(to_drop, nnam)
                 } else {
@@ -153,7 +153,7 @@ tabulateEpibed <- function(gr,
 
                 if ((preg[["end"]] - preg[["start"]] == 0) && (preg[["end"]] == creg[["start"]])) {
                     tmp <- .mergeWithNAs(comb, pnam, cnam)
-                    comb[, cnam] <- replace(tmp, tmp == "", NA)
+                    comb[, cnam] <- replace(tmp, tmp == "NN", NA)
                     comb[, pnam] <- NA
                     to_drop <- c(to_drop, pnam)
                 } else {
@@ -166,7 +166,7 @@ tabulateEpibed <- function(gr,
 
                 if ((preg[["end"]] - preg[["start"]] == 0) && (preg[["end"]] == creg[["start"]])) {
                     tmp <- .mergeWithNAs(comb, pnam, cnam)
-                    comb[, cnam] <- replace(tmp, tmp == "", NA)
+                    comb[, cnam] <- replace(tmp, tmp == "NN", NA)
                     comb[, pnam] <- NA
                     to_drop <- c(to_drop, pnam)
                 }
@@ -176,7 +176,7 @@ tabulateEpibed <- function(gr,
 
                 if ((nreg[["end"]] - nreg[["start"]] == 0) && (creg[["end"]] == nreg[["start"]])) {
                     tmp <- .mergeWithNAs(comb, cnam, nnam)
-                    comb[, cnam] <- replace(tmp, tmp == "", NA)
+                    comb[, cnam] <- replace(tmp, tmp == "NN", NA)
                     comb[, nnam] <- NA
                     to_drop <- c(to_drop, nnam)
                 }
