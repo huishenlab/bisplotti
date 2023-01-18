@@ -8,7 +8,7 @@
 #' @param include_empty_reads Whether to include reads that contain no methylated (or SNP) sites (default: FALSE)
 #' @param include_snps Whether to include SNPs or not, only matters for epiBEDs from BISCUIT v1.0 or 1.1 (default: TRUE)
 #' @param merge_strands Whether to merge Cs or SNPs on opposite bisulfite strands (default: TRUE)
-#' @param merge_cg_vr Whether to create a table with the CpG and SNP tables merged (default: FALSE)
+#' @param merge_cg_vr Whether to create a table with the CpG and SNP tables merged (default: TRUE)
 #'
 #' @return A matrix or list of matrices
 #'
@@ -30,7 +30,7 @@ tabulateEpibed <- function(gr,
                            include_empty_reads = FALSE,
                            include_snps = TRUE,
                            merge_strands = TRUE,
-                           merge_cg_vr = FALSE) {
+                           merge_cg_vr = TRUE) {
 
     # check if a GRanges
     stopifnot(is(gr, "GRanges"))
