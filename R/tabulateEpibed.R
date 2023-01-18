@@ -99,7 +99,7 @@ tabulateEpibed <- function(gr,
     }
 
     if (merge_cg_vr) {
-        stop("This has not been implemented yet!")
+        tab_cgvr = .combineCgVr(cg_table, vr_table)
     } else {
         tab_cgvr = NULL
     }
@@ -108,6 +108,87 @@ tabulateEpibed <- function(gr,
                  gc_table=gc_table,
                  vr_table=vr_table,
                  tab_cgvr=tab_cgvr))
+}
+
+# helper
+# fname - name of column whose entries will be first in paste
+# lname - name of column whose entries will be last in paste
+.mergeWithNAs <- function(mat, fname, lname) {
+    tmp <- paste0(
+        replace(mat[, fname], is.na(mat[, fname]), ""),
+        replace(mat[, lname], is.na(mat[, lname]), "")
+    )
+
+    tmp
+}
+
+# helper
+.combineCgVr <- function(cg, vr) {
+    comb <- cbind(cg, vr)
+    comb <- comb[, sort(colnames(comb))]
+
+    to_drop <- c()
+    for (i in seq_along(colnames(comb))) {
+        creg = .parseRegion(colnames(comb)[i])
+        cnam = colnames(comb)[i]
+
+        if (creg[["end"]] - creg[["start"]] > 0) {
+            if (i == 1) {
+                # only need to check next column
+                nreg = .parseRegion(colnames(comb)[i+1])
+                nnam = colnames(comb)[i+1]
+
+                if ((nreg[["end"]] - nreg[["start"]] == 0) && (creg[["end"]] == nreg[["start"]])) {
+                    tmp <- .mergeWithNAs(comb, cnam, nnam)
+                    comb[, cnam] <- replace(tmp, tmp == "", NA)
+                    comb[, nnam] <- NA
+                    to_drop <- c(to_drop, nnam)
+                } else {
+                    next
+                }
+            } else if (i == ncol(comb)) {
+                # only to check previous column
+                preg = .parseRegion(colnames(comb)[i-1])
+                pnam = colnames(comb)[i-1]
+
+                if ((preg[["end"]] - preg[["start"]] == 0) && (preg[["end"]] == creg[["start"]])) {
+                    tmp <- .mergeWithNAs(comb, pnam, cnam)
+                    comb[, cnam] <- replace(tmp, tmp == "", NA)
+                    comb[, pnam] <- NA
+                    to_drop <- c(to_drop, pnam)
+                } else {
+                    next
+                }
+            } else {
+                # need to check both previous and last columns
+                preg = .parseRegion(colnames(comb)[i-1])
+                pnam = colnames(comb)[i-1]
+
+                if ((preg[["end"]] - preg[["start"]] == 0) && (preg[["end"]] == creg[["start"]])) {
+                    tmp <- .mergeWithNAs(comb, pnam, cnam)
+                    comb[, cnam] <- replace(tmp, tmp == "", NA)
+                    comb[, pnam] <- NA
+                    to_drop <- c(to_drop, pnam)
+                }
+
+                nreg = .parseRegion(colnames(comb)[i+1])
+                nnam = colnames(comb)[i+1]
+
+                if ((nreg[["end"]] - nreg[["start"]] == 0) && (creg[["end"]] == nreg[["start"]])) {
+                    tmp <- .mergeWithNAs(comb, cnam, nnam)
+                    comb[, cnam] <- replace(tmp, tmp == "", NA)
+                    comb[, nnam] <- NA
+                    to_drop <- c(to_drop, nnam)
+                }
+            }
+        } else {
+            next
+        }
+    }
+
+    comb <- comb[, !(colnames(comb) %in% to_drop)]
+
+    comb
 }
 
 # helper
@@ -228,11 +309,8 @@ tabulateEpibed <- function(gr,
             message("region should either be a GRanges of a specfic region or")
             stop("region should look something like 'chr6:1555-1900'")
         }
-        chr <- strsplit(region, ":")[[1]][1]
-        coords <- strsplit(region, ":")[[1]][2]
-        strt <- strsplit(coords, "-")[[1]][1]
-        end <- strsplit(coords, "-")[[1]][2]
-        pos_to_include <- paste0(chr, ":", seq(strt, end))
+        par <- .parseRegion(region)
+        pos_to_include <- paste0(par[["chr"]], ":", seq(par[["start"]], par[["end"]]))
     } else {
         # it's possible that multiple regions could be supplied...
         if (length(region > 1) & is(region, "GRanges")) {
@@ -249,7 +327,7 @@ tabulateEpibed <- function(gr,
         } else {
             # this is if a single region is supplied as a GRanges
             stopifnot(is(region, "GRanges"))
-            pos_to_include <- paste0(seqnames(chr), ":", seq(start(region), end(region)))
+            pos_to_include <- paste0(seqnames(region), ":", seq(start(region), end(region)))
         }
     }
 
@@ -263,6 +341,17 @@ tabulateEpibed <- function(gr,
 }
 
 # helper
+.parseRegion <- function(region) {
+    chr    <- strsplit(region, ":")[[1]][1]
+    coords <- strsplit(region, ":")[[1]][2]
+    start  <- strsplit(coords, "-")[[1]][1]
+    end    <- strsplit(coords, "-")[[1]][2]
+
+    return(list(chr=chr, start=as.integer(start), end=as.integer(end)))
+}
+
+# helper
+# TODO: Refactor this behomoth
 .mergeColumns <- function(mat, type=c("cg", "gc", "snp")) {
     type <- match.arg(type)
 
@@ -421,7 +510,6 @@ tabulateEpibed <- function(gr,
             cpieces <- .parseName(cname)
 
             if (ppieces$loc == cpieces$loc) {
-                # cat("Found a good one!", prev, " ", cname, "\n")
                 for (rname in rownames(mat)) {
                     if (!is.na(mat[rname, prev]) && !is.na(mat[rname, cname])) {
                         message("Malformed file: Found values defined in both OT and OB strands!")
