@@ -7,7 +7,6 @@
 #' @param region Either a GRanges of regions to subset to or explicit region (e.g., chr6:1555-1900)
 #' @param include_empty_reads Whether to include reads that contain no methylated (or SNP) sites (default: FALSE)
 #' @param include_snps Whether to include SNPs or not, only matters for epiBEDs from BISCUIT v1.0 or 1.1 (default: TRUE)
-#' @param merge_strands Whether to merge Cs or SNPs on opposite bisulfite strands (default: TRUE)
 #' @param merge_cg_vr Whether to create a table with the CpG and SNP tables merged (default: TRUE)
 #'
 #' @return A matrix or list of matrices
@@ -29,7 +28,6 @@ tabulateEpibed <- function(gr,
                            region = NULL,
                            include_empty_reads = FALSE,
                            include_snps = TRUE,
-                           merge_strands = TRUE,
                            merge_cg_vr = TRUE) {
 
     # check if a GRanges
@@ -54,7 +52,7 @@ tabulateEpibed <- function(gr,
     if (!all(is.na(gr$CG_decode))) {
         cg_table <- .tabulateRLE(gr, col = "CG_decode", include_snps = include_snps, type = "cg")
         cg_table <- .filterToRegion(cg_table, region = region)
-        if (merge_strands) { cg_table <- .mergeColumns(cg_table, type="cg") }
+        cg_table <- .mergeColumns(cg_table, type="cg")
     } else {
         cg_table <- matrix(data = NA, nrow = length(gr$readname), ncol = 1)
         rownames(cg_table) <- gr$readname
@@ -64,7 +62,7 @@ tabulateEpibed <- function(gr,
     if (!all(is.na(gr$GC_decode))) {
         gc_table <- .tabulateRLE(gr, col = "GC_decode", include_snps = include_snps, type = "gc")
         gc_table <- .filterToRegion(gc_table, region = region)
-        if (merge_strands) { gc_table <- .mergeColumns(gc_table, type="gc") }
+        gc_table <- .mergeColumns(gc_table, type="gc")
     } else {
         gc_table <- matrix(data = NA, nrow = length(gr$readname), ncol = 1)
         rownames(gc_table) <- gr$readname
@@ -74,7 +72,7 @@ tabulateEpibed <- function(gr,
     if (!all(is.na(gr$VAR_decode))) {
         vr_table <- .tabulateRLE(gr, col = "VAR_decode", include_snps = include_snps, type = "variant")
         vr_table <- .filterToRegion(vr_table, region = region)
-        if (merge_strands) { vr_table <- .mergeColumns(vr_table, type="snp") }
+        vr_table <- .mergeColumns(vr_table, type="snp")
     } else {
         vr_table <- matrix(data = NA, nrow = length(gr$readname), ncol = 1)
         rownames(vr_table) <- gr$readname
