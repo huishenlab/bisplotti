@@ -260,7 +260,7 @@ tabulateEpibed <- function(gr,
     readlvl_gr_mat <- as.matrix(cbind(as.character(granges(readlvl_gr)), readlvl_gr$read_id, readlvl_gr$base_status))
     readlvl_emp_mat[readlvl_gr_mat[,c(2,1)]] <- readlvl_gr_mat[,3]
 
-    readlvl_emp_mat <- readlvl_emp_mat[,colSums(is.na(readlvl_emp_mat))<nrow(readlvl_emp_mat)]
+    readlvl_emp_mat <- readlvl_emp_mat[,colSums(is.na(readlvl_emp_mat))<nrow(readlvl_emp_mat), drop=FALSE]
 
     return(readlvl_emp_mat)
 }
@@ -298,7 +298,7 @@ tabulateEpibed <- function(gr,
                             region = NULL) {
 
     # return coord sorted matrix if region == NULL
-    if (is.null(region)) return(mat[,str_sort(colnames(mat), numeric=TRUE)])
+    if (is.null(region)) return(mat[,str_sort(colnames(mat), numeric=TRUE), drop=FALSE])
 
     if (!is(region, "GRanges")) {
         # attempt to parse the standard chr#:start-end
@@ -412,7 +412,7 @@ tabulateEpibed <- function(gr,
             prev <- NULL
         }
 
-        mat <- mat[,!(colnames(mat) %in% to_drop)]
+        mat <- mat[,!(colnames(mat) %in% to_drop), drop=FALSE]
 
         for (i in seq_len(length(colnames(mat)))) {
             pieces <- .parseName(colnames(mat)[i])
@@ -475,7 +475,7 @@ tabulateEpibed <- function(gr,
             prev <- NULL
         }
 
-        mat <- mat[,!(colnames(mat) %in% to_drop)]
+        mat <- mat[,!(colnames(mat) %in% to_drop), drop=FALSE]
 
         for (i in seq_len(length(colnames(mat)))) {
             pieces <- .parseName(colnames(mat)[i])
@@ -538,7 +538,7 @@ tabulateEpibed <- function(gr,
             prev <- NULL
         }
 
-        mat <- mat[,!(colnames(mat) %in% to_drop)]
+        mat <- mat[,!(colnames(mat) %in% to_drop), drop=FALSE]
 
         for (i in seq_len(length(colnames(mat)))) {
             pieces <- .parseName(colnames(mat)[i])
