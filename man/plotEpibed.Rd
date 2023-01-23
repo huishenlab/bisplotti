@@ -6,26 +6,32 @@
 \usage{
 plotEpibed(
   mat,
-  plot_read_avg = TRUE,
+  plot_meth_avg = FALSE,
   show_readnames = TRUE,
   show_positions = TRUE,
   show_all_points = FALSE,
+  show_legend = TRUE,
   meth_color = "#FF2400",
   unmeth_color = "#6495ED",
   na_color = "grey",
-  size = 6
+  size = 6,
+  n_reads = 20,
+  n_loci = 10,
+  force = FALSE
 )
 }
 \arguments{
 \item{mat}{Input matrix that comes out of tabulateEpibed()}
 
-\item{plot_read_avg}{Whether to also plot the average methylation state (default: TRUE)}
+\item{plot_meth_avg}{Whether to also plot the average methylation state (default: FALSE)}
 
 \item{show_readnames}{Whether to show the read names (default: TRUE)}
 
 \item{show_positions}{Whether to show the genomic positions (default: TRUE)}
 
 \item{show_all_points}{Whether to show all points (i.e., empty reads, unknown, and filtered sites) (default: FALSE)}
+
+\item{show_legend}{Whether to include legend in plots (default: TRUE)}
 
 \item{meth_color}{What color should the methylated states be (default: '#FF2400')}
 
@@ -34,6 +40,12 @@ plotEpibed(
 \item{na_color}{What color should the NA values be (default: 'grey')}
 
 \item{size}{What size the points should be drawn as (default: 6)}
+
+\item{n_reads}{Maximum number of reads to plot, if force = FALSE then takes first n_reads (default: 20)}
+
+\item{n_loci}{Maximum number of loci to plot, if force = FALSE then takes first n_loci (default: 10)}
+
+\item{force}{Force plotting of all reads and loci in input table (default: FALSE)}
 }
 \value{
 An epibed ggplot object or list of ggplot objects if plot_read_avg is TRUE

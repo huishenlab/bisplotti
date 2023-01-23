@@ -9,8 +9,7 @@ tabulateEpibed(
   region = NULL,
   include_empty_reads = FALSE,
   include_snps = TRUE,
-  merge_strands = TRUE,
-  merge_cg_vr = FALSE
+  merge_cg_vr = TRUE
 )
 }
 \arguments{
@@ -22,9 +21,7 @@ tabulateEpibed(
 
 \item{include_snps}{Whether to include SNPs or not, only matters for epiBEDs from BISCUIT v1.0 or 1.1 (default: TRUE)}
 
-\item{merge_strands}{Whether to merge Cs or SNPs on opposite bisulfite strands (default: TRUE)}
-
-\item{merge_cg_vr}{Whether to create a table with the CpG and SNP tables merged (default: FALSE)}
+\item{merge_cg_vr}{Whether to create a table with the CpG and SNP tables merged (default: TRUE)}
 }
 \value{
 A matrix or list of matrices
