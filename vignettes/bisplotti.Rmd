@@ -56,11 +56,11 @@ Note, `epistateCaller()` is under development and is not currently suggested
 for use in publication level analyses.
 
 ```{r plotEpiread}
-epibed.nome     <- system.file("extdata", "hct116.nome.epiread.gz", package="biscuiteer")
-epibed.nome.gr  <- readEpibed(epibed = epibed.nome, is.nome = TRUE, genome = "hg19", chr = "chr1")
+epibed.nome     <- system.file("extdata", "hct116.nome.epibed.gz", package="biscuiteer")
+epibed.nome.gr  <- readEpibed(epibed = epibed.nome, genome = "hg19", chr = "chr1")
 epibed.tab.nome <- tabulateEpibed(epibed.nome.gr)
 plotEpiread(epibed.tab.nome$gc_table)
-epistateCaller(epibed.tab.nome)
+#epistateCaller(epibed.tab.nome)
 ```
 
 ## Multiscale
