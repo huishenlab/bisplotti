@@ -330,10 +330,10 @@ tabulateEpibed <- function(gr,
     }
 
     # subset to positions to include
-    mat.sub <- mat[,substr(colnames(mat), 1, nchar(colnames(mat))-2) %in% pos_to_include]
+    mat.sub <- mat[,substr(colnames(mat), 1, nchar(colnames(mat))-2) %in% pos_to_include, drop = FALSE]
 
     # order by chromosome position
-    mat.sub <- mat.sub[,str_sort(colnames(mat.sub), numeric=TRUE)]
+    mat.sub <- mat.sub[,str_sort(colnames(mat.sub), numeric=TRUE), drop = FALSE]
 
     return(mat.sub)
 }
@@ -349,7 +349,7 @@ tabulateEpibed <- function(gr,
 }
 
 # helper
-# TODO: Refactor this behomoth
+# TODO: Refactor this behemoth
 .mergeColumns <- function(mat, type=c("cg", "gc", "snp")) {
     type <- match.arg(type)
 
