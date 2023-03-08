@@ -150,7 +150,7 @@ plotEpibed <- function(mat,
             )
     } else {
         ql_theme <- ql_theme +
-            theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+            theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
     }
 
     ql_theme
