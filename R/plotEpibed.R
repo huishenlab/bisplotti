@@ -229,7 +229,13 @@ plotEpibed <- function(mat,
 
     # Add legend if desired
     if (show_legend) {
-        leg <- .createLegend(size, meth_color, unmeth_color, na_color)
+        # Check which values are found in data
+        extra_vals <- c()
+        if (any(pd$value %in% c("N"))) { extra_vals <- c(extra_vals, "N") }
+        if (length(cvr_cg$value) > 0)  { extra_vals <- c(extra_vals, "C") }
+        if (length(cvl_cg$value) > 0)  { extra_vals <- c(extra_vals, "G") }
+        if (length(cvm_cg$value) > 0)  { extra_vals <- c(extra_vals, "CG") }
+        leg <- .createLegend(extra_vals, size, meth_color, unmeth_color, na_color)
         out <- plot_grid(plt, leg, rel_widths = c(4, 1))
     } else {
         out <- plt
@@ -240,13 +246,46 @@ plotEpibed <- function(mat,
 
 # helper to create legend for epiBED plot
 # it was easier to manually create the figure than to deal with ggplot forming the legend auto-magically
-.createLegend <- function(size, meth_color, unmeth_color, na_color) {
-    points <- data.frame(
-        x=rep(1,7),
-        y=c(-1, -2, -3, -4, 3, 2, 1),
-        data=c("A", "C", "G", "CG", "M", "N", "U"),
-        labels=c("Lone CpG/SNP", "CpG, SNP at C", "CpG, SNP at G", "CpG, SNP at both", "Methylated", "Unknown", "Unmethylated")
-    )
+.createLegend <- function(extra_vals, size, meth_color, unmeth_color, na_color) {
+    # Set up what points will be shown
+    # M, U, and Lone CpG/SNP will always be shown
+    xs <- rep(1,3)
+    ys <- c(3, 2, -1)
+    ds <- c("M", "U", "A")
+    ls <- c("Methylated", "Unmethylated", "Lone CpG/SNP")
+
+    # Add extra values if they exist
+    if ("N" %in% extra_vals) { # unknown
+        xs <- c(xs, 1)
+        ys <- c(ys, 1)
+        ds <- c(ds, "N")
+        ls <- c(ls, "Unknown")
+    }
+    if ("C" %in% extra_vals) { # CpG, SNP at C
+        xs <- c(xs, 1)
+        ys <- c(ys, -2)
+        ds <- c(ds, "C")
+        ls <- c(ls, "CpG, SNP at C")
+    }
+    if ("G" %in% extra_vals) { # CpG, SNP at G
+        y <- -3
+        if (!("C" %in% extra_vals)) { y <- y + 1 }
+        xs <- c(xs, 1)
+        ys <- c(ys, y)
+        ds <- c(ds, "G")
+        ls <- c(ls, "CpG, SNP at G")
+    }
+    if ("CG" %in% extra_vals) { # CpG, SNP at both
+        y <- -4
+        if (!("C" %in% extra_vals)) { y <- y + 1 }
+        if (!("G" %in% extra_vals)) { y <- y + 1 }
+        xs <- c(xs, 1)
+        ys <- c(ys, y)
+        ds <- c(ds, "CG")
+        ls <- c(ls, "CpG, SNP at both")
+    }
+
+    points <- data.frame(x=xs, y=ys, data=ds, labels=ls)
 
     plt <- ggplot(points, aes(x=x, y=y)) +
         geom_point(aes(fill=data, shape=data), size=size, color="black") +
